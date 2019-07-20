@@ -1,0 +1,11 @@
+[package]
+name = "lineup_builder_rs"
+version = "0.1.0"
+authors = ["Jordan Small <'jsmall@esri.com'>"]
+edition = "2018"
+
+[dependencies]
+csv="1"
+serde="1"
+serde_derive="1"
+clap="2.33.0"
