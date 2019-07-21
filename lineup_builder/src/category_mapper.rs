@@ -1,11 +1,19 @@
 use std::collections::{ HashSet };
 
 pub trait CategoryMapper {
-    fn map(string: &str) -> HashSet<usize>;
+    fn map(&self, string: &str) -> HashSet<u32>;
+}
+
+pub fn choose_category_mapper(sport: &str) -> Option<impl CategoryMapper> {
+    if sport == "nba" {
+        return Some(NBACategoryMapper { });
+    }
+
+    None
 }
 
 /// these are DFS positions for the NBA (at least on draft kings...)
-enum NBAPositions {
+pub enum NBAPositions {
     PointGuard = 0,
 	ShootingGuard = 1,
 	SmallForward = 2,
@@ -13,41 +21,41 @@ enum NBAPositions {
 	Center = 4,
 	Guard = 5,
 	Forward = 6,
-	UTIL = 7, // how do I take this into account (wildcard), and futhermore how would I take a flex position into account RB/WR/TE
+	UTIL = 7,
 	Captain = 8,
 }
 
-pub struct NBACategoryMapper { }
+struct NBACategoryMapper { }
 
 impl NBACategoryMapper {
-    fn get_pos_value(string: &str) -> usize {
+    fn get_pos_value(string: &str) -> u32 {
         if string == "PG" {
-            NBAPositions::PointGuard as usize
+            NBAPositions::PointGuard as u32
         } else if string == "SG" {
-            NBAPositions::ShootingGuard as usize
+            NBAPositions::ShootingGuard as u32
         } else if string == "SF" {
-            NBAPositions::SmallForward as usize
+            NBAPositions::SmallForward as u32
         } else if string == "PF" {
-            NBAPositions::PowerForward as usize
+            NBAPositions::PowerForward as u32
         } else if string == "C" {
-            NBAPositions::Center as usize
+            NBAPositions::Center as u32
         } else if string == "G" {
-            NBAPositions::Guard as usize
+            NBAPositions::Guard as u32
         } else if string == "F" {
-            NBAPositions::Forward as usize
+            NBAPositions::Forward as u32
         } else if string == "UTIL" {
-            NBAPositions::UTIL as usize
+            NBAPositions::UTIL as u32
         } else if string == "CPT" {
-            NBAPositions::Captain as usize
+            NBAPositions::Captain as u32
         } else {
-            std::usize::MAX
+            std::u32::MAX
         }
     }
 }
 
 impl CategoryMapper for NBACategoryMapper {
-    fn map(string: &str) -> HashSet<usize> {
-        let mut categories: HashSet<usize> = HashSet::new();
+    fn map(&self, string: &str) -> HashSet<u32> {
+        let mut categories: HashSet<u32> = HashSet::new();
         let tokenized: Vec<&str> = string.split('/').collect();
         for token in tokenized {
             let pos_value = NBACategoryMapper::get_pos_value(token);
@@ -65,68 +73,71 @@ mod tests {
     #[test]
     fn single_each_nba() {
         let mut pos = "PG";
-        let mut cats = NBACategoryMapper::map(pos);
+        let mapper = NBACategoryMapper {};
+        let mut cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::PointGuard as usize)), "should contain item mapping to point guard");
+        assert!(cats.contains(&(NBAPositions::PointGuard as u32)), "should contain item mapping to point guard");
 
         pos = "SG";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::ShootingGuard as usize)), "should contain item mapping to shooting guard");
+        assert!(cats.contains(&(NBAPositions::ShootingGuard as u32)), "should contain item mapping to shooting guard");
         
         pos = "SF";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::SmallForward as usize)), "should contain item mapping to small forward");
+        assert!(cats.contains(&(NBAPositions::SmallForward as u32)), "should contain item mapping to small forward");
 
         pos = "PF";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::PowerForward as usize)), "should contain item mapping to power forward");
+        assert!(cats.contains(&(NBAPositions::PowerForward as u32)), "should contain item mapping to power forward");
 
         pos = "C";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::Center as usize)), "should contain item mapping to center");
+        assert!(cats.contains(&(NBAPositions::Center as u32)), "should contain item mapping to center");
 
         pos = "G";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::Guard as usize)), "should contain item mapping to guard");
+        assert!(cats.contains(&(NBAPositions::Guard as u32)), "should contain item mapping to guard");
 
         pos = "F";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::Forward as usize)), "should contain item mapping to foward");
+        assert!(cats.contains(&(NBAPositions::Forward as u32)), "should contain item mapping to foward");
 
         pos = "UTIL";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::UTIL as usize)), "should contain item mapping to UTIL");
+        assert!(cats.contains(&(NBAPositions::UTIL as u32)), "should contain item mapping to UTIL");
 
         pos = "CPT";
-        cats = NBACategoryMapper::map(pos);
+        cats = mapper.map(pos);
         assert!(cats.len() == 1, "should only have one entry");
-        assert!(cats.contains(&(NBAPositions::Captain as usize)), "should contain item mapping to captain");
+        assert!(cats.contains(&(NBAPositions::Captain as u32)), "should contain item mapping to captain");
     }
 
     #[test]
     fn multiple_unique_nba() {
         let mut pos = "PG/G/UTIL/CPT";
-        let cats = NBACategoryMapper::map(pos);
+        let mapper = NBACategoryMapper {};
+        let cats = mapper.map(pos);
         assert!(cats.len() == 4);
-        assert!(cats.contains(&(NBAPositions::PointGuard as usize)));
-        assert!(cats.contains(&(NBAPositions::Guard as usize)));
-        assert!(cats.contains(&(NBAPositions::UTIL as usize)));
-        assert!(cats.contains(&(NBAPositions::Captain as usize)));
+        assert!(cats.contains(&(NBAPositions::PointGuard as u32)));
+        assert!(cats.contains(&(NBAPositions::Guard as u32)));
+        assert!(cats.contains(&(NBAPositions::UTIL as u32)));
+        assert!(cats.contains(&(NBAPositions::Captain as u32)));
     }
 
     #[test]
     fn multiple_repeat_nba() {
         let mut pos = "PG/PG/UTIL";
-        let cats = NBACategoryMapper::map(pos);
+        let mapper = NBACategoryMapper {};
+        let cats = mapper.map(pos);
         assert!(cats.len() == 2);
-        assert!(cats.contains(&(NBAPositions::PointGuard as usize)));
-        assert!(cats.contains(&(NBAPositions::UTIL as usize)));
+        assert!(cats.contains(&(NBAPositions::PointGuard as u32)));
+        assert!(cats.contains(&(NBAPositions::UTIL as u32)));
     }
 }

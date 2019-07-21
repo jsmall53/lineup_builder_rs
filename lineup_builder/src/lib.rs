@@ -9,6 +9,8 @@ extern crate serde;
 extern crate serde_json;
 
 use common::{ LineupContext, LineupSlot, Player };
+use contest_reader::ContestTemplateReader;
+use category_mapper::CategoryMapper;
 
 pub struct LineupBuilder {
     resource_base_path: String,
@@ -17,7 +19,7 @@ pub struct LineupBuilder {
     dfs_provider: Option<String>,
     sport: Option<String>,
     contest_type: Option<String>,
-    slate_path: Option<String>, 
+    slate_path: Option<String>,
 }
 
 impl LineupBuilder {
@@ -77,12 +79,21 @@ impl LineupBuilder {
             path.push_str(".json");
         }
         // read in the contest template from path
+        let lineup_context = ContestTemplateReader::load(&path);
 
-        // setup the LineupContext
+        // TODO: account for unimplemented lineup settings here
+        //      i.e. 'salary_remaining', slotting players in to optimize around them, setting a distribution
 
         // choose the correct mapper
+        if let Some(sport) = &self.sport {
+            let mapper = category_mapper::choose_category_mapper(sport);
+            // read the slate to construct the player pool
 
-        // read the slate to construct the player pool
+
+        } else { // ERROR: unknown sport
+
+        }
+
 
         self
     }
@@ -97,14 +108,14 @@ mod tests {
 
     #[test]
     fn lineup_builder_test() {
-        let builder = LineupBuilder::new("test_data")
-                        .provider("Draft Kings")
-                        .sport("nba")
-                        .contest("classic")
-                        .slate("data.csv")
-                        .build();
+        // let builder = LineupBuilder::new("test_data")
+        //                 .provider("Draft Kings")
+        //                 .sport("nba")
+        //                 .contest("classic")
+        //                 .slate("data.csv")
+        //                 .build();
 
-        builder.optimize();
+        // builder.optimize();
         assert!(true);
     }
 }

@@ -7,6 +7,7 @@ use crate::common::{ LineupContext };
 
 pub struct ContestTemplateReader { }
 
+// TODO: implement save so I can write new contests out, (not by hand)
 impl ContestTemplateReader {
     pub fn load(file_path: &str) -> LineupContext {
         let file = File::open(file_path)
@@ -30,6 +31,7 @@ mod tests {
 
     #[test]
     fn test_load() {
+        println!("{:?}", env::current_dir());
         let context = ContestTemplateReader::load("../resources/game_templates/draft_kings/nba/classic.json");
         assert_eq!(context.salary_cap, 50000);
         assert_eq!(context.slots.len(), 8);
