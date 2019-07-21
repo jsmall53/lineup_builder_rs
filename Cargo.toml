@@ -9,3 +9,6 @@ csv="1"
 serde="1"
 serde_derive="1"
 clap="2.33.0"
+
+[dependencies.lineup_builder]
+path="lineup_builder"

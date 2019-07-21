@@ -4,8 +4,7 @@ use serde;
 #[macro_use]
 use serde_derive;
 
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{ HashMap, HashSet };
 use std::error::Error;
 use std::ops::Add;
 
@@ -87,7 +86,7 @@ impl SlateDataReader {
     }
 }
 
-struct OptimizerContext {
+pub struct OptimizerContext {
     weight: u32,
     categories: Vec<u32>,
     items: Vec<Player<f64>>,
@@ -151,9 +150,9 @@ impl Optimizer {
         let item_weight = next_item.price;
         let category_list: Vec<usize> = next_item.categories.clone().into_iter().collect();
         let category = category_list[0];
-        let mut next_value: f64;
+        let mut next_value: f64 = 0.0;
         let mut next_valid = false;
-        let mut next_set: HashSet<usize>;
+        let mut next_set: HashSet<usize> = HashSet::new();
         if item_weight <= weight && categories[category] > 0 {
             let mut new_k_take = categories.clone();
             new_k_take[category] -= 1;
@@ -171,18 +170,43 @@ impl Optimizer {
                     next_set = take.2;
                     let duplicate = next_set.insert(n as usize - 1);
                     if duplicate {
-                        
+                        let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());  
+                        next_value = n_value;
+                        next_valid = n_valid;
+                        next_set = n_set;
                     }
+                } else { // a < b
+                    next_set = reject.2;
                 }
+            } else if take.1 { // if only the take path is valid
+                next_set = take.2;
+                let duplicate = next_set.insert(n as usize - 1);
+                if !duplicate {
+                    next_value = b;
+                } else {
+                    let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());
+                    next_value = n_value;
+                    next_valid = n_valid;
+                    next_set = n_set;
+                }
+            } else if reject.1 { // if only the reject path is valid
+                next_value = b;
+                next_set = reject.2;
+            } else { // no valid path
+                // TODO:
+                next_value = 0.0;
+                next_valid = false;
+                next_set = HashSet::new();
             }
+        } else {
+            let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());  
+            next_value = n_value;
+            next_valid = n_valid;
+            next_set = n_set;
         }
-
-
-        return (0.0, false, HashSet::<usize>::new());
+        let ret_value = (next_value, next_valid, next_set);
+        let final_key = (n.clone(), weight, categories.clone());
+        self.cache.insert(final_key, ret_value.clone());
+        return ret_value;
     }
 }
-
-// pub fn optimize<T>(weight: u32, K: Vec<u32>, player_pool: Vec<Player<T>>) {
-//     let mut cache: HashMap<CacheKey, CacheValue<T>> = HashMap::new();
-
-// }

@@ -16,6 +16,7 @@ fn run(file_path: &str) -> Result<(), Box<Error>> {
     let mut reader = lineup_optimizer::SlateDataReader::new(&file_path);
     reader.read()?;
     let player_pool = reader.get_player_pool();
+    
     for player in &player_pool {
         println!("{:?}", player);
     }
