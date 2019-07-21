@@ -1,20 +1,22 @@
 use std::cmp::{ Ordering };
 use std::collections::{ HashSet };
-
+use serde::{ Deserialize, Serialize };
 
 pub enum DFSProvider {
     DraftKings,
     FanDuel,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub enum SportType {
     nfl,
     nba,
     mlb,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LineupSlot {
-    id: i32,
+    // id: i32,
     name: String,
     key: String,
     count: u32,
@@ -22,10 +24,11 @@ pub struct LineupSlot {
     point_multiplier: f64,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LineupContext {
-    sport_type: SportType,
-    slots: HashSet<LineupSlot>,
-    salary_cap: u32,
+    pub sport_type: SportType,
+    pub slots: Vec<LineupSlot>,
+    pub salary_cap: u32,
 }
 
 #[derive(Debug, Clone, Default)]

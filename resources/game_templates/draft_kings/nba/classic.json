@@ -1,85 +1,66 @@
 {
+    "dfs_provider" : "draft_kings",
+    "contest_type" : "classic",
+    "sport_type" : "nba",
     "salary_cap" : 50000,
     "slots" : [
         {
-            "lineup_slot":
-            {
-                "name": "Point Guard",
-                "key": "PG",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Point Guard",
+            "key": "PG",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         },
         {
-            "lineup_slot":
-            {
-                "name": "Shooting Guard",
-                "key": "SG",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Shooting Guard",
+            "key": "SG",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         },
         {
-            "lineup_slot":
-            {
-                "name": "Small Forward",
-                "key": "SF",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Small Forward",
+            "key": "SF",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         },
         {
-            "lineup_slot":
-            {
-                "name": "Power Forward",
-                "key": "PF",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Power Forward",
+            "key": "PF",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         },
         {
-            "lineup_slot":
-            {
-                "name": "Center",
-                "key": "C",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Center",
+            "key": "C",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+
+        {
+            "name": "Guard",
+            "key": "G",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+
         },
         {
-            "lineup_slot":
-            {
-                "name": "Guard",
-                "key": "G",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Foward",
+            "key": "F",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         },
         {
-            "lineup_slot":
-            {
-                "name": "Foward",
-                "key": "F",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
-        },
-        {
-            "lineup_slot":
-            {
-                "name": "Utility",
-                "key": "UTIL",
-                "count": 1,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "Utility",
+            "key": "UTIL",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         }
     ]
 }

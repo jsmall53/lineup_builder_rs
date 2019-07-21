@@ -3,6 +3,10 @@
 //non-public mods
 mod common;
 mod category_mapper;
+mod contest_reader;
+
+extern crate serde;
+extern crate serde_json;
 
 use common::{ LineupContext, LineupSlot, Player };
 

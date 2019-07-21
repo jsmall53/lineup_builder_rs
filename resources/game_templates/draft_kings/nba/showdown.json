@@ -2,24 +2,18 @@
     "salary_cap": 50000,
     "slots": [
         {
-            "lineup_slot" : 
-            {
-                "name": "captain",
-                "key" : "CPT",
-                "count": 1,
-                "salary_multiplier": 1.5,
-                "point_multiplier": 1.5
-            }
+            "name": "captain",
+            "key" : "CPT",
+            "count": 1,
+            "salary_multiplier": 1.5,
+            "point_multiplier": 1.5
         },
         {
-            "lineup_slot":
-            {
-                "name": "utility",
-                "key": "UTIL",
-                "count": 5,
-                "salary_multiplier": 1,
-                "point_multiplier": 1
-            }
+            "name": "utility",
+            "key": "UTIL",
+            "count": 5,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
         }
     ]
 }
