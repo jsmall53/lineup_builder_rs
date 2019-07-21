@@ -88,8 +88,7 @@ impl LineupBuilder {
         if let Some(sport) = &self.sport {
             let mapper = category_mapper::choose_category_mapper(sport);
             // read the slate to construct the player pool
-
-
+            
         } else { // ERROR: unknown sport
 
         }
