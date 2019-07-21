@@ -1,0 +1,75 @@
+{
+    "salary_cap" : 50000,
+    "slots" : [
+        {
+            "lineup_slot":
+            {
+                "name": "Pitcher",
+                "key": "P",
+                "count": 2,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "Catcher",
+                "key": "C",
+                "count": 1,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "First Base",
+                "key": "1B",
+                "count": 1,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "Second Base",
+                "key": "2B",
+                "count": 1,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "Third Base",
+                "key": "3B",
+                "count": 1,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "Short Stop",
+                "key": "SS",
+                "count": 1,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        },
+        {
+            "lineup_slot":
+            {
+                "name": "Out Field",
+                "key": "OF",
+                "count": 3,
+                "salary_multiplier": 1,
+                "point_multiplier": 1
+            }
+        }
+    ]
+}
