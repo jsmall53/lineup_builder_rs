@@ -1,7 +1,14 @@
 use std::error::Error;
 use csv;
 use serde::{ Deserialize, Serialize };
-use serde::de;
+use crate::common::Player;
+use crate::category_mapper::{ CategoryMapper };
+
+// TODO: figure out this interface!
+pub trait SlateReader {
+    fn read(&self);
+    fn file_path(&self);
+}
 
 pub struct SlateDataReader {
     file_path: String,
@@ -23,6 +30,17 @@ impl SlateDataReader {
             self.player_data_list.push(record);
         }
         Ok(())
+    }
+
+    pub fn get_player_pool(&self, mapper: impl CategoryMapper) -> Vec<Player> {
+        let mut player_pool = Vec::new();
+        for row in &self.player_data_list {
+            let hash = HashSet::new();
+            let categories: HashSet<u32> = mapper.map(&row.roster_position);
+            let player = Player::new(&row.id, &row.name, row.salary, row.avg_points_per_game, categories);
+            player_pool.push(player);
+        }
+        player_pool.sort();
     }
 }
 
@@ -47,4 +65,17 @@ pub struct SlateDataRow {
     teamabbrev: String,
     #[serde(rename = "AvgPointsPerGame")]
     avg_points_per_game: f64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // not really unit tests
+    #[test]
+    fn read_slate() {
+        let reader = SlateDataReader::new("../../data/DKSalaries.csv");
+        reader.read();
+
+    }
 }
