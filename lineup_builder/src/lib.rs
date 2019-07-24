@@ -4,6 +4,7 @@
 mod common;
 mod category_mapper;
 mod contest_reader;
+mod slate_reader;
 
 extern crate serde;
 extern crate serde_json;
@@ -88,8 +89,7 @@ impl LineupBuilder {
         if let Some(sport) = &self.sport {
             let mapper = category_mapper::choose_category_mapper(sport);
             // read the slate to construct the player pool
-
-
+            
         } else { // ERROR: unknown sport
 
         }

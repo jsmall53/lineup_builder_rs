@@ -56,15 +56,17 @@ impl LineupContext {
 
 #[derive(Debug, Clone, Default)]
 pub struct Player {
+    id: u64,
     name: String,
-    categories: HashSet<usize>,
+    categories: HashSet<u32>,
     price: u32,
     projected_points: f64
 }
 
 impl Player {
-    pub fn new(name: &str, price: u32, projected_points: f64, categories: HashSet<usize>) -> Player {
+    pub fn new(id: u64, name: &str, price: u32, projected_points: f64, categories: HashSet<u32>) -> Player {
         Player {
+            id,
             name: String::from(name),
             categories,
             price,
@@ -99,7 +101,7 @@ mod tests {
 
     #[test]
     fn player_value() {
-        let player = Player::new("test player", 5000, 20.0, HashSet::new());
+        let player = Player::new(1, "test player", 5000, 20.0, HashSet::new());
         assert_eq!(player.get_value(), 0.004);
     }
 
