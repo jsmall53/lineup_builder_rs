@@ -1,3 +1,4 @@
+use std::collections::{ HashSet };
 use std::error::Error;
 use csv;
 use serde::{ Deserialize, Serialize };
@@ -35,12 +36,12 @@ impl SlateDataReader {
     pub fn get_player_pool(&self, mapper: impl CategoryMapper) -> Vec<Player> {
         let mut player_pool = Vec::new();
         for row in &self.player_data_list {
-            let hash = HashSet::new();
             let categories: HashSet<u32> = mapper.map(&row.roster_position);
-            let player = Player::new(&row.id, &row.name, row.salary, row.avg_points_per_game, categories);
+            let player = Player::new(row.id, &row.name, row.salary, row.avg_points_per_game, categories);
             player_pool.push(player);
         }
-        player_pool.sort();
+        player_pool.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        player_pool
     }
 }
 
@@ -54,7 +55,7 @@ pub struct SlateDataRow {
     #[serde(rename = "Name")]
     name: String,
     #[serde(rename = "ID")]
-    id: i64,
+    id: u64,
     #[serde(rename = "Roster Position")]
     roster_position: String,
     #[serde(rename = "Salary")]
@@ -70,12 +71,14 @@ pub struct SlateDataRow {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // not really unit tests
+    use crate::category_mapper::choose_category_mapper;
+    
     #[test]
     fn read_slate() {
-        let reader = SlateDataReader::new("../../data/DKSalaries.csv");
+        // not really a unit test
+        let mut reader = SlateDataReader::new("../data/DKSalaries.csv");
         reader.read();
-
+        let player_pool = reader.get_player_pool(choose_category_mapper("nba").unwrap());
+        assert!(player_pool.len() > 0);
     }
 }
