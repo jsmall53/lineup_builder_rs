@@ -18,7 +18,7 @@ fn run(file_path: &str) -> Result<(), Box<Error>> {
     let player_pool = reader.get_player_pool();
     
     for player in &player_pool {
-        println!("{:?}", player);
+        println!("{:?}\n", player);
     }
     Ok(())
 }

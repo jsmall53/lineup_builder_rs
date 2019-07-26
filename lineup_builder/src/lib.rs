@@ -5,13 +5,18 @@ mod common;
 mod category_mapper;
 mod contest_reader;
 mod slate_reader;
+mod lineup_optimizer;
 
 extern crate serde;
 extern crate serde_json;
 
+use std::cmp::Reverse;
+use std::fs::File as STD_FILE;
+use std::io::{ BufWriter, Write };
 use common::{ LineupContext, LineupSlot, Player };
 use contest_reader::ContestTemplateReader;
 use category_mapper::CategoryMapper;
+use lineup_optimizer::{ OptimizerContext, Optimizer };
 
 pub struct LineupBuilder {
     resource_base_path: String,
@@ -80,25 +85,79 @@ impl LineupBuilder {
             path.push_str(".json");
         }
         // read in the contest template from path
-        let lineup_context = ContestTemplateReader::load(&path);
+        self.context = Some(ContestTemplateReader::load(&path));
 
         // TODO: account for unimplemented lineup settings here
         //      i.e. 'salary_remaining', slotting players in to optimize around them, setting a distribution
 
         // choose the correct mapper
         if let Some(sport) = &self.sport {
-            let mapper = category_mapper::choose_category_mapper(sport);
+            let mapper = category_mapper::choose_category_mapper(sport).unwrap();
             // read the slate to construct the player pool
+            if let Some(slate_path) = &self.slate_path {
+                let mut reader = slate_reader::SlateDataReader::new(slate_path);
+                reader.read().unwrap();
+                self.player_pool = Some(reader.get_player_pool(mapper));
+                // for player in &self.player_pool {
+                //     println!("{:?}", player);
+                // }
+            } else { // ERROR: no slate path
+
+            }
             
         } else { // ERROR: unknown sport
 
         }
 
-
         self
     }
 
-    pub fn optimize(&self) {
+    pub fn optimize(&mut self) {
+        let mapper = match &self.sport {
+            Some(sport) => category_mapper::choose_category_mapper(sport).unwrap(),
+            None => panic!("failed mapping categories for optimization")
+        };
+
+        let category_count = &self.context.as_mut().map(|c| c.calculate_category_count(mapper)).unwrap();
+
+        // calculcate optimial lineup
+        let optimizer_context = OptimizerContext::new(50000, category_count.clone(), self.player_pool.clone().unwrap());
+        // println!("{:?}", &optimizer_context);
+        let mut optimizer = Optimizer::new(optimizer_context);
+        // fix this api lmao. what a messcargo 
+        let optimizer_result = optimizer.optimize(self.player_pool.clone().unwrap().len() as u32, 50000, category_count.clone());
+        // println!("{:?}", optimizer_result);
+        let file: STD_FILE = STD_FILE::create("log.log").unwrap();
+        let mut writer = BufWriter::new(&file);
+        // for entry in optimizer.cache.iter() {
+        //     write!(writer, "{:?}\n", entry).unwrap();
+        // }
+        // writer.flush();
+
+        if optimizer_result.1 {
+            // construct the lineup object from the result data
+            let mut optimal_lineup: Vec<&Player> = Vec::new();
+            
+            for index in optimizer_result.2 {
+                let player: &Player = self.player_pool.as_ref().unwrap().iter().nth(index).unwrap();
+                optimal_lineup.push(player);
+            }
+            optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
+            
+            let mut point_total = 0.0;
+            let mut salary_total = 0;
+            let mut p = 1;
+            println!("===Optimal Lineup===");
+            for player in optimal_lineup {
+                point_total += player.projected_points;
+                salary_total += player.price;
+                println!("{}.\t{:?}", p, player);
+                p += 1;
+            }
+            println!("====================");
+        } else { // no valid data
+            println!("No valid data...");
+        }
     }
 }
 
@@ -108,14 +167,15 @@ mod tests {
 
     #[test]
     fn lineup_builder_test() {
-        // let builder = LineupBuilder::new("test_data")
-        //                 .provider("Draft Kings")
-        //                 .sport("nba")
-        //                 .contest("classic")
-        //                 .slate("data.csv")
-        //                 .build();
+        println!("{:?}", std::env::current_dir());
+        let mut builder = LineupBuilder::new("../resources/game_templates/")
+                        .provider("draft_kings")
+                        .sport("nba")
+                        .contest("showdown")
+                        .slate("../data/DKSalaries.csv")
+                        .build();
 
-        // builder.optimize();
-        assert!(true);
+        builder.optimize();
+        assert!(false); // TODO: this is just to be able to see the output in the console until I setup the main application
     }
 }

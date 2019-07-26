@@ -1,4 +1,7 @@
 {
+    "dfs_provider" : "draft_kings",
+    "contest_type" : "classic",
+    "sport_type" : "nba",
     "salary_cap": 50000,
     "slots": [
         {

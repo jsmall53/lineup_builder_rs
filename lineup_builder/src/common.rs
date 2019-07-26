@@ -56,11 +56,11 @@ impl LineupContext {
 
 #[derive(Debug, Clone, Default)]
 pub struct Player {
-    id: u64,
-    name: String,
-    categories: HashSet<u32>,
-    price: u32,
-    projected_points: f64
+    pub id: u64,
+    pub name: String,
+    pub categories: HashSet<u32>,
+    pub price: u32,
+    pub projected_points: f64
 }
 
 impl Player {

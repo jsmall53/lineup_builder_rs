@@ -11,7 +11,7 @@ pub struct ContestTemplateReader { }
 impl ContestTemplateReader {
     pub fn load(file_path: &str) -> LineupContext {
         let file = File::open(file_path)
-                        .expect("failed to open contest template file");
+                        .expect(&format!("failed to open contest template file: {}", file_path));
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
         let size: usize = match buf_reader.read_to_string(&mut contents) {
