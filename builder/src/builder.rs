@@ -87,6 +87,7 @@ impl Builder {
     pub fn build(mut self) -> Result<Self, &'static str> {
         let mut path = String::new();
         path.push_str(&self.resource_path);
+        if !&self.resource_path.ends_with('/') { path.push('/') };
         if let Some(p) = &self.dfs_provider {
             path.push_str(p);
             path.push('/');
