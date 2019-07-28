@@ -115,14 +115,14 @@ impl Builder {
             Some(ref s) => &s.player_data_list,
             None => panic!("Catastrophic error, no state available to get player pool. check inputs and retry"),
         };
-
+        let salary_cap = match &self.builder_state {
+            Some(ref s) => &s.salary_cap,
+            None => panic!("Catatropic error, no state available to get salary cap. check inputs and retry"),
+        };
         // calculcate optimial lineup
-        let optimizer_context = OptimizerContext::new(50000, category_count.clone(), player_pool.clone().unwrap());
-        // println!("{:?}", &optimizer_context);
+        let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), player_pool.clone().unwrap());
         let mut optimizer = Optimizer::new(optimizer_context);
-        // fix this api lmao. what a messcargo 
-        let optimizer_result = optimizer.optimize(player_pool.clone().unwrap().len() as u32, 50000, category_count.clone());
-        // println!("{:?}", optimizer_result);
+        let optimizer_result = optimizer.optimize();
         let file: STD_FILE = STD_FILE::create("log.log").unwrap();
         let mut writer = BufWriter::new(&file);
         // for entry in optimizer.cache.iter() {
@@ -131,7 +131,7 @@ impl Builder {
         // writer.flush();
 
         if optimizer_result.1 {
-            // construct the lineup object from the result data
+            // TODO: construct the lineup object from the result data
             let mut optimal_lineup: Vec<&Player> = Vec::new();
             
             for index in optimizer_result.2 {
