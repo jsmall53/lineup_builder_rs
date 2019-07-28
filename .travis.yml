@@ -4,5 +4,5 @@ rust:
 cache: cargo
 script:
   - cargo build --verbose --all
-  - cargo test -p lineup_builder
+  - cargo test -p builder
   - cargo test --verbose --all
