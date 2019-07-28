@@ -19,7 +19,7 @@ fn run(file_path: &str) -> Result<Lineup, &'static str> {
                         .sport("nba")
                         .contest("showdown")
                         .slate(file_path)
-                        .build()
+                        .build().expect("optimizer build step failed")
                         .optimize();
     // match result {
     //     Ok(ref lineup) => println!("{}", lineup.to_string()),
