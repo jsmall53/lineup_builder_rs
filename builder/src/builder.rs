@@ -84,26 +84,29 @@ impl Builder {
         self
     }
 
-    pub fn build(mut self) -> Self {
+    pub fn build(mut self) -> Result<Self, &'static str> {
         let mut path = String::new();
         path.push_str(&self.resource_path);
+        if !&self.resource_path.ends_with('/') { path.push('/') };
         if let Some(p) = &self.dfs_provider {
             path.push_str(p);
             path.push('/');
         } else { // how am I handling errors here?
-
+            return Err("no provider specified");
         }
 
         if let Some(s) = &self.sport {
             path.push_str(s);
             path.push('/');
         } else { // error
-
+            return Err("no sport specified");
         }
 
         if let Some(c) = &self.contest_type {
             path.push_str(c);
             path.push_str(".json");
+        } else {
+            return Err("no contest type specified");
         }
 
         let mut builder_state = BuilderState {
@@ -122,16 +125,15 @@ impl Builder {
             // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
                 // TODO: handle this error
-                read_slate(slate_path, &mut builder_state, mapper);
+                read_slate(slate_path, &mut builder_state, mapper)?;
             } else { // ERROR: no slate path
-
+                return Err("no slate path specified");
             }
-            
         } else { // ERROR: unknown sport
-
+            return Err("no sport specified");
         }
         self.builder_state = Some(builder_state);
-        self
+        Ok(self)
     }
 
     pub fn optimize(&self) -> Result<Lineup, &'static str> {
@@ -140,7 +142,6 @@ impl Builder {
             None => panic!("failed mapping categories for optimization")
         };
 
-        // let category_count = &self.context.as_mut().map(|c| c.calculate_category_count(mapper)).unwrap();
         let category_count = match &self.builder_state {
             Some(ref s) => common::calculate_category_count(s, mapper),
             None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
@@ -158,12 +159,6 @@ impl Builder {
         let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), player_pool.clone().unwrap());
         let mut optimizer = Optimizer::new(optimizer_context);
         let optimizer_result = optimizer.optimize();
-        // let file: STD_FILE = STD_FILE::create("log.log").unwrap();
-        // let mut writer = BufWriter::new(&file);
-        // for entry in optimizer.cache.iter() {
-        //     write!(writer, "{:?}\n", entry).unwrap();
-        // }
-        // writer.flush();
 
         if optimizer_result.1 {
             // TODO: construct the lineup object from the result data

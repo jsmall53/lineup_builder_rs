@@ -10,23 +10,27 @@ pub trait SlateReader {
     fn read(&self);
 }
 
-pub fn read_slate(file_path: &str, builder_state: &mut BuilderState, mapper: impl CategoryMapper) -> Result<(), Box<Error>> {
+pub fn read_slate(file_path: &str, builder_state: &mut BuilderState, mapper: impl CategoryMapper) -> Result<(), &'static str> {
     let mut reader = csv::Reader::from_path(file_path).unwrap();
     let mut player_data_list: Vec<Player> = Vec::new();
-    for result in reader.deserialize() {
-        let record: SlateDataRow = result?;
-        let categories: HashSet<u32> = mapper.map(&record.roster_position);
-        let mut player = Player {
-            id: record.id,
-            name: record.name,
-            price: record.salary,
-            projected_points: record.avg_points_per_game,
-            categories: categories,
-        };
-        if &record.roster_position == "CPT" {
-            player.projected_points *= 1.5;
+    for result in reader.deserialize::<SlateDataRow>() {
+        match result {
+            Ok(record) => {
+                let categories: HashSet<u32> = mapper.map(&record.roster_position);
+                let mut player = Player {
+                    id: record.id,
+                    name: record.name,
+                    price: record.salary,
+                    projected_points: record.avg_points_per_game,
+                    categories: categories,
+                };
+                if &record.roster_position == "CPT" {
+                    player.projected_points *= 1.5;
+                }
+                player_data_list.push(player);
+            },
+            Err(_err) => return Err("error parsing csv")
         }
-        player_data_list.push(player);
     }
     builder_state.player_data_list = Some(player_data_list);
     Ok(())
