@@ -11,19 +11,22 @@ extern crate clap;
 use std::error::Error;
 use std::process;
 use clap::{ App, Arg };
-use builder::builder::{ Builder };
+use builder::builder::{ Builder, Lineup };
 
-fn run(file_path: &str) -> Result<(), Box<Error>> {
+fn run(file_path: &str) -> Result<Lineup, &'static str> {
     let builder = Builder::new("./resources/game_templates/");
-    builder.provider("draft_kings")
-            .sport("nba")
-            .contest("showdown")
-            .slate(file_path)
-            .build()
-            .optimize();
+    let result = builder.provider("draft_kings")
+                        .sport("nba")
+                        .contest("showdown")
+                        .slate(file_path)
+                        .build()
+                        .optimize();
+    // match result {
+    //     Ok(ref lineup) => println!("{}", lineup.to_string()),
+    //     Err(msg) => println!("Error creating lineup: {}", msg),
+    // };
 
-    Ok(())
-    // unimplemented!()
+    result
 }
 
 fn main() {
@@ -42,8 +45,11 @@ fn main() {
 
     let _config = matches.value_of("config").unwrap_or("default.conf");
     let input_file = matches.value_of("INPUT_FILE").unwrap(); // this is a required parameter
-    if let Err(err) = run(&input_file) {
-        println!("{}", err);
-        process::exit(1);
+    match run(&input_file) {
+        Ok(lineup) => println!("{}", lineup.to_string()),
+        Err(err) => {
+            println!("{}", err);
+            process::exit(1);
+        }
     }
 }
