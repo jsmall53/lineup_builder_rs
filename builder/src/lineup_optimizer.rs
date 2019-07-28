@@ -35,8 +35,9 @@ impl Optimizer {
         }
     }
 
-    pub fn optimize(&mut self, n: u32, weight: u32, categories: Vec<u32>) -> CacheValue {
-        return self.optimize_impl(n, weight, categories);
+    pub fn optimize(&mut self) -> CacheValue {
+        let n = self.context.items.len() as u32;
+        return self.optimize_impl(n, self.context.weight, self.context.categories.clone());
     }
 
     fn optimize_impl(&mut self, n: u32, weight: u32, categories: Vec<u32>) -> CacheValue {
@@ -91,11 +92,11 @@ impl Optimizer {
         if item_weight <= weight && categories[category] > 0 {
             let mut new_k_take = categories.clone();
             new_k_take[category] -= 1;
-            let take = self.optimize(n - 1, weight - item_weight, new_k_take);
+            let take = self.optimize_impl(n - 1, weight - item_weight, new_k_take);
 
             let new_k_reject = categories.clone();
             // new_k_reject[category] += 1;
-            let reject = self.optimize(n - 1, weight, new_k_reject);
+            let reject = self.optimize_impl(n - 1, weight, new_k_reject);
             
             let a = item_val + take.0;
             let b = reject.0;
@@ -114,7 +115,7 @@ impl Optimizer {
                     if !duplicate {
                         next_set.insert((n as usize) - 1);
                     } else  {
-                        let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());  
+                        let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone());  
                         next_value = n_value;
                         next_valid = n_valid;
                         next_set = n_set;
@@ -137,7 +138,7 @@ impl Optimizer {
                     next_set.insert((n as usize) - 1);
                     next_value = a;
                 } else {
-                    let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());
+                    let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone());
                     next_value = n_value;
                     next_valid = n_valid;
                     next_set = n_set;
@@ -154,7 +155,7 @@ impl Optimizer {
             }
         } else {
             // println!("item weight or category count incorrect");
-            let (n_value, n_valid, n_set) = self.optimize(n - 1, weight, categories.clone());  
+            let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone());  
             next_value = n_value;
             next_valid = n_valid;
             next_set = n_set;

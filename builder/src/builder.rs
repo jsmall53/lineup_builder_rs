@@ -8,6 +8,41 @@ use crate::contest_reader::{ load_contest };
 use crate::slate_reader::{ read_slate };
 use crate::lineup_optimizer::{ OptimizerContext, Optimizer };
 
+pub struct Lineup {
+    player_list: Vec<Player>,
+}
+
+impl Lineup {
+    pub fn new(player_list: Vec<Player>) -> Lineup {
+        Lineup {
+            player_list
+        }
+    }
+
+    pub fn expected_result(&self) -> (f64, u32) {
+        let mut point_total = 0.0;
+        let mut salary_total = 0;
+        for player in &self.player_list {
+            point_total += player.projected_points;
+            salary_total += player.price;
+        }
+        (point_total, salary_total)
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut output = String::new();
+        let mut p = 1;
+        for player in &self.player_list {
+            output.push_str(&format!("{}. {:?}\n", p, player));
+            p += 1;
+        }
+        output.push_str("--------------------------\n");
+        let (point_total, salary_total) = self.expected_result();
+        output.push_str(&format!("Point Total: {}, Salary Total: {}", point_total, salary_total));
+        output
+    }
+}
+
 pub struct Builder {
     resource_path: String,
     dfs_provider: Option<String>,
@@ -99,7 +134,7 @@ impl Builder {
         self
     }
 
-    pub fn optimize(&self) {
+    pub fn optimize(&self) -> Result<Lineup, &'static str> {
         let mapper = match &self.sport {
             Some(sport) => category_mapper::choose_category_mapper(sport).unwrap(),
             None => panic!("failed mapping categories for optimization")
@@ -115,44 +150,34 @@ impl Builder {
             Some(ref s) => &s.player_data_list,
             None => panic!("Catastrophic error, no state available to get player pool. check inputs and retry"),
         };
-
+        let salary_cap = match &self.builder_state {
+            Some(ref s) => &s.salary_cap,
+            None => panic!("Catatropic error, no state available to get salary cap. check inputs and retry"),
+        };
         // calculcate optimial lineup
-        let optimizer_context = OptimizerContext::new(50000, category_count.clone(), player_pool.clone().unwrap());
-        // println!("{:?}", &optimizer_context);
+        let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), player_pool.clone().unwrap());
         let mut optimizer = Optimizer::new(optimizer_context);
-        // fix this api lmao. what a messcargo 
-        let optimizer_result = optimizer.optimize(player_pool.clone().unwrap().len() as u32, 50000, category_count.clone());
-        // println!("{:?}", optimizer_result);
-        let file: STD_FILE = STD_FILE::create("log.log").unwrap();
-        let mut writer = BufWriter::new(&file);
+        let optimizer_result = optimizer.optimize();
+        // let file: STD_FILE = STD_FILE::create("log.log").unwrap();
+        // let mut writer = BufWriter::new(&file);
         // for entry in optimizer.cache.iter() {
         //     write!(writer, "{:?}\n", entry).unwrap();
         // }
         // writer.flush();
 
         if optimizer_result.1 {
-            // construct the lineup object from the result data
-            let mut optimal_lineup: Vec<&Player> = Vec::new();
+            // TODO: construct the lineup object from the result data
+            let mut optimal_lineup: Vec<Player> = Vec::new();
             
             for index in optimizer_result.2 {
-                let player: &Player = player_pool.as_ref().unwrap().iter().nth(index).unwrap();
+                let player: Player = player_pool.as_ref().unwrap().iter().nth(index).map(|p| p.clone()).unwrap();
                 optimal_lineup.push(player);
             }
             optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
-            
-            let mut point_total = 0.0;
-            let mut salary_total = 0;
-            let mut p = 1;
-            println!("===Optimal Lineup===");
-            for player in optimal_lineup {
-                point_total += player.projected_points;
-                salary_total += player.price;
-                println!("{}.\t{:?}", p, player);
-                p += 1;
-            }
-            println!("====================");
+            let lineup = Lineup::new(optimal_lineup);
+            return Ok(lineup)
         } else { // no valid data
-            println!("No valid data...");
+            return Err("No valid data...");
         }
     }
 }
