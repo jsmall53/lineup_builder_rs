@@ -24,6 +24,15 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "builder"
+version = "0.1.0"
+dependencies = [
+ "csv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "clap"
 version = "2.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -79,6 +88,7 @@ dependencies = [
 name = "lineup_builder_rs"
 version = "0.1.0"
 dependencies = [
+ "builder 0.1.0",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "csv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "lineup_builder 0.1.0",

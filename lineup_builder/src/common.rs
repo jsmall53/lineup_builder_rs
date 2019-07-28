@@ -17,7 +17,7 @@ pub enum SportType {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct LineupSlot {
+pub struct RosterSlot {
     // id: i32,
     pub name: String,
     pub key: String,
@@ -29,7 +29,7 @@ pub struct LineupSlot {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LineupContext {
     pub sport_type: SportType,
-    pub slots: Vec<LineupSlot>,
+    pub slots: Vec<RosterSlot>,
     pub salary_cap: u32,
 }
 
@@ -117,14 +117,14 @@ mod tests {
 
     fn create_test_context() -> LineupContext {
         let mut slots = Vec::new();
-        slots.push(LineupSlot {
+        slots.push(RosterSlot {
             name: String::from("captain"),
             count: 1,
             salary_multiplier: 1.5,
             point_multiplier: 1.5,
             key: String::from("CPT")
         });
-        slots.push(LineupSlot {
+        slots.push(RosterSlot {
             name: String::from("util"),
             count: 5,
             salary_multiplier: 1.0,

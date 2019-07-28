@@ -12,3 +12,6 @@ clap="2.33.0"
 
 [dependencies.lineup_builder]
 path="lineup_builder"
+
+[dependencies.builder]
+path="builder"

@@ -1,52 +1,31 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-//public
-
-//non-public mods
-mod common;
-mod category_mapper;
-mod contest_reader;
-mod slate_reader;
-mod lineup_optimizer;
-
-extern crate serde;
-extern crate serde_json;
-
-use std::cmp::Reverse;
-use std::fs::File as STD_FILE;
+use std::fs::{ File as STD_FILE };
 use std::io::{ BufWriter, Write };
-use common::{ LineupContext, RosterSlot, Player };
-use contest_reader::{ ContestTemplateReader };
-use category_mapper::CategoryMapper;
-use lineup_optimizer::{ OptimizerContext, Optimizer };
-use slate_reader::{ SlateDataReader, SlateDataRow };
 
-pub struct State {
-    player_data_list:  Vec<SlateDataRow>, // TODO: fix this data type. Vec<?>
-    roster_slots: Vec<RosterSlot>,
-    salary_cap: u32,
-}
+use crate::category_mapper;
+use crate::common;
+use crate::common::{ BuilderState, Player };
+use crate::contest_reader::{ load_contest };
+use crate::slate_reader::{ read_slate };
+use crate::lineup_optimizer::{ OptimizerContext, Optimizer };
 
-pub struct LineupBuilder {
+pub struct Builder {
+    resource_path: String,
     dfs_provider: Option<String>,
     sport: Option<String>,
     contest_type: Option<String>,
     slate_path: Option<String>,
-    resource_base_path: String,
-    context: Option<LineupContext>,
-    player_pool: Option<Vec<Player>>,
+    builder_state: Option<BuilderState>,
 }
 
-impl LineupBuilder {
-    pub fn new(resource_path: &str) -> LineupBuilder {
-        LineupBuilder {
-            resource_base_path: String::from(resource_path),
-            context: None,
-            player_pool: None,
+impl Builder {
+    pub fn new(resource_path: &str) -> Builder {
+        Builder {
+            resource_path: String::from(resource_path),
             dfs_provider: None,
             sport: None,
             contest_type: None,
-            slate_path: None
+            slate_path: None,
+            builder_state: None,
         }
     }
 
@@ -60,13 +39,11 @@ impl LineupBuilder {
         self
     }
 
-    // set the contest 
     pub fn contest(mut self, contest: &str) -> Self {
         self.contest_type = Some(String::from(contest));
         self
     }
 
-    /// Sets the path to the slate data
     pub fn slate(mut self, slate_path: &str) -> Self {
         self.slate_path = Some(String::from(slate_path));
         self
@@ -74,7 +51,7 @@ impl LineupBuilder {
 
     pub fn build(mut self) -> Self {
         let mut path = String::new();
-        path.push_str(&self.resource_base_path);
+        path.push_str(&self.resource_path);
         if let Some(p) = &self.dfs_provider {
             path.push_str(p);
             path.push('/');
@@ -93,8 +70,12 @@ impl LineupBuilder {
             path.push_str(c);
             path.push_str(".json");
         }
-        // read in the contest template from path
-        self.context = Some(ContestTemplateReader::load(&path));
+
+        let mut builder_state = BuilderState {
+            player_data_list: None,
+            roster_slots: None,
+            salary_cap: None,
+        };
 
         // TODO: account for unimplemented lineup settings here
         //      i.e. 'salary_remaining', slotting players in to optimize around them, setting a distribution
@@ -102,14 +83,11 @@ impl LineupBuilder {
         // choose the correct mapper
         if let Some(sport) = &self.sport {
             let mapper = category_mapper::choose_category_mapper(sport).unwrap();
+            load_contest(&path, &mut builder_state);
             // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
-                let mut reader = slate_reader::SlateDataReader::new(slate_path);
-                reader.read().unwrap();
-                self.player_pool = Some(reader.get_player_pool(mapper));
-                // for player in &self.player_pool {
-                //     println!("{:?}", player);
-                // }
+                // TODO: handle this error
+                read_slate(slate_path, &mut builder_state, mapper);
             } else { // ERROR: no slate path
 
             }
@@ -117,24 +95,33 @@ impl LineupBuilder {
         } else { // ERROR: unknown sport
 
         }
-
+        self.builder_state = Some(builder_state);
         self
     }
 
-    pub fn optimize(&mut self) {
+    pub fn optimize(&self) {
         let mapper = match &self.sport {
             Some(sport) => category_mapper::choose_category_mapper(sport).unwrap(),
             None => panic!("failed mapping categories for optimization")
         };
 
-        let category_count = &self.context.as_mut().map(|c| c.calculate_category_count(mapper)).unwrap();
+        // let category_count = &self.context.as_mut().map(|c| c.calculate_category_count(mapper)).unwrap();
+        let category_count = match &self.builder_state {
+            Some(ref s) => common::calculate_category_count(s, mapper),
+            None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
+        };
+
+        let player_pool = match &self.builder_state {
+            Some(ref s) => &s.player_data_list,
+            None => panic!("Catastrophic error, no state available to get player pool. check inputs and retry"),
+        };
 
         // calculcate optimial lineup
-        let optimizer_context = OptimizerContext::new(50000, category_count.clone(), self.player_pool.clone().unwrap());
+        let optimizer_context = OptimizerContext::new(50000, category_count.clone(), player_pool.clone().unwrap());
         // println!("{:?}", &optimizer_context);
         let mut optimizer = Optimizer::new(optimizer_context);
         // fix this api lmao. what a messcargo 
-        let optimizer_result = optimizer.optimize(self.player_pool.clone().unwrap().len() as u32, 50000, category_count.clone());
+        let optimizer_result = optimizer.optimize(player_pool.clone().unwrap().len() as u32, 50000, category_count.clone());
         // println!("{:?}", optimizer_result);
         let file: STD_FILE = STD_FILE::create("log.log").unwrap();
         let mut writer = BufWriter::new(&file);
@@ -148,7 +135,7 @@ impl LineupBuilder {
             let mut optimal_lineup: Vec<&Player> = Vec::new();
             
             for index in optimizer_result.2 {
-                let player: &Player = self.player_pool.as_ref().unwrap().iter().nth(index).unwrap();
+                let player: &Player = player_pool.as_ref().unwrap().iter().nth(index).unwrap();
                 optimal_lineup.push(player);
             }
             optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
@@ -167,24 +154,5 @@ impl LineupBuilder {
         } else { // no valid data
             println!("No valid data...");
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn lineup_builder_test() {
-        println!("{:?}", std::env::current_dir());
-        let mut builder = LineupBuilder::new("../resources/game_templates/")
-                        .provider("draft_kings")
-                        .sport("nba")
-                        .contest("showdown")
-                        .slate("../data/DKSalaries.csv")
-                        .build();
-
-        builder.optimize();
-        assert!(false); // TODO: this is just to be able to see the output in the console until I setup the main application
     }
 }
