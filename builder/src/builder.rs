@@ -124,7 +124,6 @@ impl Builder {
             load_contest(&path, &mut builder_state);
             // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
-                // TODO: handle this error
                 read_slate(slate_path, &mut builder_state, mapper)?;
             } else { // ERROR: no slate path
                 return Err("no slate path specified");
