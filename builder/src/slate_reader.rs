@@ -1,22 +1,34 @@
-use std::collections::{ HashSet };
+use std::collections::{ HashMap, HashSet };
 use std::error::Error;
 use csv;
 use serde::{ Deserialize, Serialize };
 use crate::common::{ BuilderState, Player };
-use crate::category_mapper::{ CategoryMapper };
+use crate::category_mapper;
 
 // TODO: figure out this interface!
 pub trait SlateReader {
     fn read(&self);
 }
 
-pub fn read_slate(file_path: &str, builder_state: &mut BuilderState, mapper: impl CategoryMapper) -> Result<(), &'static str> {
+pub fn read_slate(file_path: &str, builder_state: &mut BuilderState, category_map: &HashMap<String, u32>) -> Result<(), &'static str> {
     let mut reader = csv::Reader::from_path(file_path).unwrap();
     let mut player_data_list: Vec<Player> = Vec::new();
     for result in reader.deserialize::<SlateDataRow>() {
         match result {
             Ok(record) => {
-                let categories: HashSet<u32> = mapper.map(&record.roster_position);
+                let category_keys: Vec<&str> = record.roster_position.split('/').collect();
+                let mut categories: HashSet<u32> = HashSet::new();
+                for key in category_keys {
+                    let category = match category_map.get(key) {
+                        Some(val) => Some(val),
+                        None => {
+                            println!("no value found for key '{:?}'", key);
+                            None
+                        }
+                    };
+                    categories.insert(*category.unwrap());
+                }
+
                 let mut player = Player {
                     id: record.id,
                     name: record.name,

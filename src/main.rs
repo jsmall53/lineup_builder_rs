@@ -16,15 +16,11 @@ use builder::builder::{ Builder, Lineup };
 fn run(file_path: &str) -> Result<Lineup, &'static str> {
     let builder = Builder::new("./resources/game_templates/");
     let result = builder.provider("draft_kings")
-                        .sport("nba")
+                        .sport("mlb")
                         .contest("classic")
                         .slate(file_path)
                         .build().expect("optimizer build step failed")
                         .optimize();
-    // match result {
-    //     Ok(ref lineup) => println!("{}", lineup.to_string()),
-    //     Err(msg) => println!("Error creating lineup: {}", msg),
-    // };
 
     result
 }

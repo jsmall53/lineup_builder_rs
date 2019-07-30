@@ -120,11 +120,11 @@ impl Builder {
 
         // choose the correct mapper
         if let Some(sport) = &self.sport {
-            let mapper = category_mapper::choose_category_mapper(sport).unwrap();
+            let mapped_indices = category_mapper::map_categories(sport).unwrap();
             load_contest(&path, &mut builder_state);
             // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
-                read_slate(slate_path, &mut builder_state, mapper)?;
+                read_slate(slate_path, &mut builder_state, &mapped_indices)?;
             } else { // ERROR: no slate path
                 return Err("no slate path specified");
             }
@@ -136,13 +136,13 @@ impl Builder {
     }
 
     pub fn optimize(&self) -> Result<Lineup, &'static str> {
-        let mapper = match &self.sport {
-            Some(sport) => category_mapper::choose_category_mapper(sport).unwrap(),
+        let mapped_indices = match &self.sport {
+            Some(sport) => category_mapper::map_categories(sport).unwrap(),
             None => panic!("failed mapping categories for optimization")
         };
 
         let category_count = match &self.builder_state {
-            Some(ref s) => common::calculate_category_count(s, mapper),
+            Some(ref s) => common::calculate_category_count(s, &mapped_indices),
             None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
         };
 

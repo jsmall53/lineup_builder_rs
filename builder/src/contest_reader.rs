@@ -2,7 +2,6 @@ use std::fs::{ File };
 use std::io::{ BufReader, Read };
 use serde::{ Deserialize, Serialize };
 
-use crate::category_mapper::{ CategoryMapper };
 use crate::common::{ BuilderState, RosterSlot };
 
 /// Just an intermediary struct for serializing/deserialize this data

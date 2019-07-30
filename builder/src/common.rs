@@ -1,7 +1,6 @@
 use std::cmp::{ Ordering };
-use std::collections::{ HashSet };
+use std::collections::{ HashMap, HashSet };
 use serde::{ Deserialize, Serialize };
-use crate::category_mapper::CategoryMapper;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RosterSlot {
@@ -48,13 +47,12 @@ pub struct BuilderState {
     pub salary_cap: Option<u32>,
 }
 
-pub fn calculate_category_count(builder_state: &BuilderState, mapper: impl CategoryMapper) -> Vec<u32> {
+pub fn calculate_category_count(builder_state: &BuilderState, category_map: &HashMap<String, u32>) -> Vec<u32> {
     let mut category_counts: Vec<u32> = vec!(0; 100);
     if let Some(ref slots) = &builder_state.roster_slots {
         for slot in slots {
-            let index_map = mapper.map(&slot.key);
-            let category_index = index_map.iter().take(1).next().unwrap(); // a slot will only ever have one position key
-            category_counts[(*category_index) as usize] = slot.count; // a position key will never be repeated across multiple slots, no need to add the counts together
+            let mapped_index = category_map.get(&slot.key).unwrap();
+            category_counts[(*mapped_index) as usize] = slot.count; // a position key will never be repeated across multiple slots, no need to add the counts together
         }
     }
     // cleanup some unused portion of the Vec

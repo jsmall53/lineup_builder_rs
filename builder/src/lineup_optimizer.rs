@@ -40,7 +40,7 @@ impl Optimizer {
         return self.optimize_impl(n, self.context.weight, self.context.categories.clone());
     }
 
-    fn optimize_impl(&mut self, n: u32, weight: u32, mut categories: Vec<u32>) -> CacheValue {
+    fn optimize_impl(&mut self, n: u32, weight: u32, categories: Vec<u32>) -> CacheValue {
         if let Some(it) = self.cache.get_mut(&(n, weight, categories.clone())) {
             return it.clone();
         }
