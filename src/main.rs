@@ -16,7 +16,7 @@ use builder::builder::{ Builder, Lineup };
 fn run(file_path: &str) -> Result<Lineup, &'static str> {
     let builder = Builder::new("./resources/game_templates/");
     let result = builder.provider("draft_kings")
-                        .sport("mlb")
+                        .sport("nfl")
                         .contest("classic")
                         .slate(file_path)
                         .build().expect("optimizer build step failed")

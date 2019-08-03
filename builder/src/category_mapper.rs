@@ -70,6 +70,7 @@ impl CategoryMapper for MLBCategoryMapper {
             String::from("3B"),
             String::from("SS"),
             String::from("OF"),
+            String::from("CPT"),
         ]
     }
 }
@@ -84,6 +85,8 @@ impl CategoryMapper for NFLCategoryMapper {
             String::from("WR"),
             String::from("TE"),
             String::from("FLEX"),
+            String::from("DST"),
+            String::from("CPT"),
         ]
     }
 }
@@ -91,11 +94,6 @@ impl CategoryMapper for NFLCategoryMapper {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[test]
-    // fn test_mapped_index() {
-    //     let mapper = get_nba_mapper();
-    // }
 
     #[test]
     fn single_each_nba() {
