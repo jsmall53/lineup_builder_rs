@@ -1,7 +1,7 @@
 {
     "dfs_provider" : "draft_kings",
     "contest_type" : "showdown",
-    "sport_type" : "nba",
+    "sport_type" : "nfl",
     "salary_cap": 50000,
     "slots": [
         {
@@ -12,8 +12,8 @@
             "point_multiplier": 1.5
         },
         {
-            "name": "utility",
-            "key": "UTIL",
+            "name": "Flex",
+            "key": "FLEX",
             "count": 5,
             "salary_multiplier": 1,
             "point_multiplier": 1

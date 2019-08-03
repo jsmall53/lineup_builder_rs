@@ -1,0 +1,50 @@
+{
+    "dfs_provider": "draft_kings",
+    "contest_type": "classic",
+    "sport_type": "nfl",
+    "salary_cap": 50000,
+    "slots": [
+        {
+            "name": "Quarterback",
+            "key": "QB",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+        {
+            "name": "Runningback",
+            "key": "RB",
+            "count": 2,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+        {
+            "name": "Wide Receiver",
+            "key": "WR",
+            "count": 3,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+        {
+            "name": "Tight End",
+            "key": "TE",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+        {
+            "name": "Flex",
+            "key": "FLEX",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        },
+        {
+            "name": "Team Defense",
+            "key": "DST",
+            "count": 1,
+            "salary_multiplier": 1,
+            "point_multiplier": 1
+        }
+    ]
+}
