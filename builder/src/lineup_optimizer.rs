@@ -26,7 +26,6 @@ type CacheValue = (f64, bool, BTreeSet<usize>);
 pub struct Optimizer {
     pub cache: BTreeMap<CacheKey, CacheValue>,
     context: OptimizerContext,
-    depth: u64,
 }
 
 impl Optimizer {
@@ -34,7 +33,6 @@ impl Optimizer {
         Optimizer {
             cache: BTreeMap::new(),
             context,
-            depth: 0,
         }
     }
 
@@ -45,8 +43,6 @@ impl Optimizer {
     }
 
     fn optimize_impl(&mut self, n: u32, weight: u32, categories: Rc<RefCell<Vec<u32>>>) -> CacheValue {
-        self.depth += 1;
-        // print!("\rdepth: {}", self.depth);
         if let Some(it) = self.cache.get_mut(&(n, weight, categories.clone())) { // dont need to clone!
             return it.clone();
         }
@@ -82,21 +78,21 @@ impl Optimizer {
             return self.cache.get(&key).unwrap().clone();
         }
 
-        let next_item: &Player = &self.context.items[(n as usize) - 1];
+        let next_item: Player = self.context.items[(n as usize) - 1].clone();
         let item_val = next_item.projected_points;
         let item_weight = next_item.price;
-
+        let current_name = next_item.name;
         let mut next_value: f64 = 0.0;
         let mut next_valid = true;
         let mut next_set: BTreeSet<usize> = BTreeSet::new(); // need to avoid this extra allocation somehow
         let category_list: Vec<usize> = next_item.categories.clone().into_iter().map(|c| c as usize).collect();
         for category in &category_list {
             if item_weight <= weight && categories.borrow()[*category] > 0 {
-                let mut new_k_take = categories.clone(); // don't need to clone!
+                let new_k_take = categories.clone(); // don't need to clone value!
                 new_k_take.borrow_mut()[*category] -= 1;
                 let take = self.optimize_impl(n - 1, weight - item_weight, new_k_take);
 
-                let mut new_k_reject = categories.clone(); // don't need to clone!
+                let new_k_reject = categories.clone(); // don't need to clone value!
                 new_k_reject.borrow_mut()[*category] += 1;
                 let reject = self.optimize_impl(n - 1, weight, new_k_reject);
                 
@@ -107,11 +103,16 @@ impl Optimizer {
                         next_value = a;
                         next_set = take.2;
                         let mut duplicate = false;
+                        for i in &next_set {
+                            if current_name == self.context.items[*i].name {
+                                duplicate = true;
+                            }
+                        }
                         if !duplicate {
                             next_set.insert((n as usize) - 1);
                             break;
                         } else  {
-                            let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone()); // don't need to clone!
+                            let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone()); // don't need to clone value!
                             next_value = n_value;
                             next_valid = n_valid;
                             next_set = n_set;
@@ -123,12 +124,17 @@ impl Optimizer {
                 } else if take.1 { // if only the take path is valid
                     next_set = take.2;
                     let mut duplicate = false;
+                    for i in &next_set {
+                        if current_name == self.context.items[*i].name {
+                            duplicate = true;
+                        }
+                    }
                     if !duplicate {
                         next_set.insert((n as usize) - 1);
                         next_value = a;
                         break;
                     } else {
-                        let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone()); // don't need to clone!
+                        let (n_value, n_valid, n_set) = self.optimize_impl(n - 1, weight, categories.clone()); // don't need to clone value!
                         next_value = n_value;
                         next_valid = n_valid;
                         next_set = n_set;
@@ -152,8 +158,6 @@ impl Optimizer {
         let ret_value = (next_value, next_valid, next_set);
         let final_key = (n.clone(), weight, Rc::new((*categories).clone())); // need to clone/copy!
         self.cache.insert(final_key, ret_value.clone());
-        self.depth -= 1;
-        // print!("\rdepth: {}", self.depth);
         return ret_value;
     }
 }
