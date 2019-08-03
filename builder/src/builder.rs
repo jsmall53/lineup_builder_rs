@@ -1,5 +1,7 @@
 use std::fs::{ File as STD_FILE };
 use std::io::{ BufWriter, Write };
+use std::rc::{ Rc };
+use std::cell::{ Cell, RefCell };
 
 use crate::category_mapper;
 use crate::common;
@@ -141,37 +143,66 @@ impl Builder {
             None => panic!("failed mapping categories for optimization")
         };
 
-        let category_count = match &self.builder_state {
-            Some(ref s) => common::calculate_category_count(s, &mapped_indices),
+        match &self.builder_state {
+            Some(ref s) => {
+                let category_count = common::calculate_category_count(s, &mapped_indices);
+                let player_pool: Vec<Player> = s.player_data_list.clone().unwrap()
+                    .iter()
+                    .filter(|p| p.projected_points > 0.0)
+                    .map(|p| p.clone())
+                    .collect();;
+                let optimized_player_pool: Rc<Vec<Player>> = Rc::new(player_pool);
+                // let optimized_player_pool: Vec<Player> = player_pool.iter()
+                //     .filter(|p| p.projected_points > 0.0)
+                //     .map(|p| p.clone())
+                //     .collect();
+                let salary_cap = &s.salary_cap;
+                
+                // calculcate optimial lineup
+                let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), Rc::clone(&optimized_player_pool));
+                let mut optimizer = Optimizer::new(optimizer_context);
+                let optimizer_result = optimizer.optimize();
+
+                if optimizer_result.1 {
+                    // TODO: construct the lineup object from the result data
+                    let mut optimal_lineup: Vec<Player> = Vec::new();
+                    
+                    for index in optimizer_result.2 {
+                        let player: Player = optimized_player_pool.iter().nth(index).map(|p| p.clone()).unwrap();
+                        optimal_lineup.push(player);
+                    }
+                    optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
+                    let lineup = Lineup::new(optimal_lineup);
+                    return Ok(lineup)
+                } else { // no valid data
+                    return Err("No valid data...");
+                }
+            },
             None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
         };
+    }
+}
 
-        let player_pool = match &self.builder_state {
-            Some(ref s) => &s.player_data_list,
-            None => panic!("Catastrophic error, no state available to get player pool. check inputs and retry"),
-        };
-        let salary_cap = match &self.builder_state {
-            Some(ref s) => &s.salary_cap,
-            None => panic!("Catatropic error, no state available to get salary cap. check inputs and retry"),
-        };
-        // calculcate optimial lineup
-        let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), player_pool.clone().unwrap());
-        let mut optimizer = Optimizer::new(optimizer_context);
-        let optimizer_result = optimizer.optimize();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-        if optimizer_result.1 {
-            // TODO: construct the lineup object from the result data
-            let mut optimal_lineup: Vec<Player> = Vec::new();
-            
-            for index in optimizer_result.2 {
-                let player: Player = player_pool.as_ref().unwrap().iter().nth(index).map(|p| p.clone()).unwrap();
-                optimal_lineup.push(player);
-            }
-            optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
-            let lineup = Lineup::new(optimal_lineup);
-            return Ok(lineup)
-        } else { // no valid data
-            return Err("No valid data...");
-        }
+    #[test]
+    fn test_refcell_copying() {
+        let mut ref_cell: RefCell<Vec<u32>> = RefCell::new(vec![2, 1, 1, 1, 1, 1, 3]);
+        let orig_clone = ref_cell.clone();
+        (*ref_cell.get_mut())[0] -= 1;
+        assert_eq!(ref_cell, RefCell::new(vec![1, 1, 1, 1, 1, 1, 3]));
+        assert_eq!(orig_clone, RefCell::new(vec![2, 1, 1, 1, 1, 1, 3]));
+    }
+
+    #[test]
+    fn test_rc_refcell_clone() {
+        let mut categories = Rc::new(RefCell::new(vec![2, 1, 1, 1, 1, 1, 3]));
+        let orig_clone = Rc::new((*categories).clone());
+        (*categories.borrow_mut())[0] -= 1;
+
+        assert_eq!(categories, Rc::new(RefCell::new(vec![1, 1, 1, 1, 1, 1, 3])));
+        assert_eq!(*orig_clone, RefCell::new(vec![2, 1, 1, 1, 1, 1, 3]));
     }
 }
