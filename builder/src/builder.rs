@@ -137,7 +137,7 @@ impl Builder {
         Ok(self)
     }
 
-    pub fn optimize(&self) -> Result<Lineup, &'static str> {
+    pub fn optimize(&self) -> Result<Vec<Lineup>, &'static str> {
         let mapped_indices = match &self.sport {
             Some(sport) => category_mapper::map_categories(sport).unwrap(),
             None => panic!("failed mapping categories for optimization")
@@ -152,31 +152,40 @@ impl Builder {
                     .map(|p| p.clone())
                     .collect();;
                 let optimized_player_pool: Rc<Vec<Player>> = Rc::new(player_pool);
-                // let optimized_player_pool: Vec<Player> = player_pool.iter()
-                //     .filter(|p| p.projected_points > 0.0)
-                //     .map(|p| p.clone())
-                //     .collect();
                 let salary_cap = &s.salary_cap;
                 
                 // calculcate optimial lineup
                 let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), Rc::clone(&optimized_player_pool));
                 let mut optimizer = Optimizer::new(optimizer_context);
-                let optimizer_result = optimizer.optimize();
-
-                if optimizer_result.1 {
-                    // TODO: construct the lineup object from the result data
+                let optimizer_result_best = optimizer.optimize();
+                let take = 3;
+                let mut sorted_results = Vec::new();
+                let mut lineups = Vec::new();
+                for entry in optimizer.cache.iter() {
+                    let (_, optimizer_result) = entry;
+                    if optimizer_result.1 {
+                        sorted_results.push(optimizer_result);
+                    }
+                }
+                sorted_results.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+                for result in sorted_results {
                     let mut optimal_lineup: Vec<Player> = Vec::new();
                     
-                    for index in optimizer_result.2 {
-                        let player: Player = optimized_player_pool.iter().nth(index).map(|p| p.clone()).unwrap();
+                    for index in &result.2 {
+                        let player: Player = optimized_player_pool.iter().nth(*index).map(|p| p.clone()).unwrap();
                         optimal_lineup.push(player);
                     }
                     optimal_lineup.sort_by(|a,b| b.partial_cmp(a).unwrap());
                     let lineup = Lineup::new(optimal_lineup);
-                    return Ok(lineup)
-                } else { // no valid data
-                    return Err("No valid data...");
+                    lineups.push(lineup);
+                    if lineups.len() >= take {
+                        break;
+                    }
                 }
+                if lineups.len() == 0 {
+                     return Err("No valid data...");
+                }
+                return Ok(lineups);
             },
             None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
         };

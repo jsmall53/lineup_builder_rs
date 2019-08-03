@@ -13,11 +13,11 @@ use std::process;
 use clap::{ App, Arg };
 use builder::builder::{ Builder, Lineup };
 
-fn run(file_path: &str) -> Result<Lineup, &'static str> {
+fn run(file_path: &str) -> Result<Vec<Lineup>, &'static str> {
     let builder = Builder::new("./resources/game_templates/");
     let result = builder.provider("draft_kings")
                         .sport("nfl")
-                        .contest("showdown")
+                        .contest("classic")
                         .slate(file_path)
                         .build().expect("optimizer build step failed")
                         .optimize();
@@ -42,7 +42,11 @@ fn main() {
     let _config = matches.value_of("config").unwrap_or("default.conf");
     let input_file = matches.value_of("INPUT_FILE").unwrap(); // this is a required parameter
     match run(&input_file) {
-        Ok(lineup) => println!("{}", lineup.to_string()),
+        Ok(lineups) => {
+            for lineup in lineups {
+                println!("{}", lineup.to_string())
+            }
+        },
         Err(err) => {
             println!("{}", err);
             process::exit(1);
