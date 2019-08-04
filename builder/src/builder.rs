@@ -90,13 +90,13 @@ impl Builder {
         let mut path = String::new();
         path.push_str(&self.resource_path);
         if !&self.resource_path.ends_with('/') { path.push('/') };
-        if let Some(p) = &self.dfs_provider {
-            path.push_str(p);
-            path.push('/');
-        } else { // how am I handling errors here?
-            return Err("no provider specified");
-        }
-
+        let provider = match &self.dfs_provider {
+            Some(ref p) => p,
+            None => return Err("no dfs provider specified"),
+        };
+        path.push_str(provider);
+        path.push('/');
+        
         if let Some(s) = &self.sport {
             path.push_str(s);
             path.push('/');
@@ -124,9 +124,8 @@ impl Builder {
         if let Some(sport) = &self.sport {
             let mapped_indices = category_mapper::map_categories(sport).unwrap();
             load_contest(&path, &mut builder_state);
-            // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
-                read_slate(slate_path, &mut builder_state, &mapped_indices)?;
+                read_slate(slate_path, provider, &mut builder_state, &mapped_indices)?;
             } else { // ERROR: no slate path
                 return Err("no slate path specified");
             }
