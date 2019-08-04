@@ -157,7 +157,6 @@ impl Builder {
                 let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), Rc::clone(&optimized_player_pool));
                 let mut optimizer = Optimizer::new(optimizer_context);
                 let optimizer_result_best = optimizer.optimize();
-                println!("optimizer_result_best: {:?}", optimizer_result_best);
                 let take = 3;
                 let mut sorted_results = Vec::new();
                 let mut lineups = Vec::new();
@@ -168,7 +167,6 @@ impl Builder {
                     }
                 }
                 sorted_results.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
-                println!("sorted results len: {}", sorted_results.len());
                 for result in sorted_results {
                     let mut optimal_lineup: Vec<Player> = Vec::new();
                     

@@ -59,7 +59,6 @@ impl Optimizer {
         // check the current state of the input categories against the category count that was just calculated
         for i in 0..categories.borrow().len() {
             if categories.borrow()[i] > category_count[i] {
-                // println!("category mismatch, bad recurse");
                 let key = (n, weight, Rc::new((*categories).clone())); // need to clone/copy!
                 let value = (0.0, false, BTreeSet::<usize>::new());
                 self.cache.insert(key.clone(), value);
@@ -144,7 +143,6 @@ impl Optimizer {
                     next_value = b;
                     next_set = reject.2;
                 } else { // no valid path
-                    // println!("no valid path down the recusive tree");
                     next_value = 0.0;
                     next_valid = false;
                     next_set = BTreeSet::new();
