@@ -71,6 +71,7 @@ impl CategoryMapper for MLBCategoryMapper {
             String::from("SS"),
             String::from("OF"),
             String::from("CPT"),
+            String::from("UTIL"),
         ]
     }
 }
@@ -86,6 +87,7 @@ impl CategoryMapper for NFLCategoryMapper {
             String::from("TE"),
             String::from("FLEX"),
             String::from("DST"),
+            String::from("D"),
             String::from("CPT"),
         ]
     }

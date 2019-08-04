@@ -90,13 +90,13 @@ impl Builder {
         let mut path = String::new();
         path.push_str(&self.resource_path);
         if !&self.resource_path.ends_with('/') { path.push('/') };
-        if let Some(p) = &self.dfs_provider {
-            path.push_str(p);
-            path.push('/');
-        } else { // how am I handling errors here?
-            return Err("no provider specified");
-        }
-
+        let provider = match &self.dfs_provider {
+            Some(ref p) => p,
+            None => return Err("no dfs provider specified"),
+        };
+        path.push_str(provider);
+        path.push('/');
+        
         if let Some(s) = &self.sport {
             path.push_str(s);
             path.push('/');
@@ -124,9 +124,8 @@ impl Builder {
         if let Some(sport) = &self.sport {
             let mapped_indices = category_mapper::map_categories(sport).unwrap();
             load_contest(&path, &mut builder_state);
-            // read the slate to construct the player pool
             if let Some(slate_path) = &self.slate_path {
-                read_slate(slate_path, &mut builder_state, &mapped_indices)?;
+                read_slate(slate_path, provider, &mut builder_state, &mapped_indices)?;
             } else { // ERROR: no slate path
                 return Err("no slate path specified");
             }
@@ -158,6 +157,7 @@ impl Builder {
                 let optimizer_context = OptimizerContext::new(salary_cap.clone().unwrap(), category_count.clone(), Rc::clone(&optimized_player_pool));
                 let mut optimizer = Optimizer::new(optimizer_context);
                 let optimizer_result_best = optimizer.optimize();
+                println!("optimizer_result_best: {:?}", optimizer_result_best);
                 let take = 3;
                 let mut sorted_results = Vec::new();
                 let mut lineups = Vec::new();
@@ -168,6 +168,7 @@ impl Builder {
                     }
                 }
                 sorted_results.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+                println!("sorted results len: {}", sorted_results.len());
                 for result in sorted_results {
                     let mut optimal_lineup: Vec<Player> = Vec::new();
                     
