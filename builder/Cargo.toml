@@ -11,3 +11,4 @@ lp-modeler = { version = "0.3.2" }
 serde= { version = "1", features=["derive"] }
 serde_json= { version = "1" }
 csv = { version = "1" }
+maplit = { version = "1" }
