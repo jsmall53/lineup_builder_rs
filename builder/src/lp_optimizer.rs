@@ -1,22 +1,53 @@
 use std::collections::{ HashSet, HashMap };
 use std::str::FromStr;
+
 use lp_modeler;
 use lp_modeler::problem::*;
 use lp_modeler::problem::{LpObjective, Problem, LpProblem };
 use lp_modeler::operations::{LpOperations};
 use lp_modeler::variables::*;
-// use lp_modeler::variables::{ LpInteger, LpConstraint };
 use lp_modeler::variables::LpExpression::*;
 use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
 use crate::common::{ Player };
+use crate::player_pool::{ PlayerPool };
 
 struct LpOptimizer {
-
+    player_pool: PlayerPool,
+    problem: LpProblem,
+    vars: HashMap<u64, LpBinary>
 }
 
 impl LpOptimizer {
+    pub fn new(player_pool: PlayerPool) -> LpOptimizer {
+        LpOptimizer {
+            player_pool,
+            problem: LpProblem::new("lp_optimizer", LpObjective::Maximize),
+            vars: HashMap::new(),
+        }
+    }
 
+    fn define_variables(&mut self) {
+        for player in self.player_pool.get_all() {
+            let var_name = format!("P_{}", player.id);
+            self.vars.insert(player.id, LpBinary::new(&var_name));
+        }
+    }
+
+    fn define_objective_fn(&mut self) {
+        let mut obj_vec: Vec<LpExpression> = Vec::new();
+        for (&id, var) in &self.vars {
+            let obj_coef: Vec<f32> = self.player_pool.iter()
+                    .filter(|(i,_)| **i == id).map(|(_,p)| p.projected_points as f32).take(1).collect();
+            obj_vec.push(obj_coef[0] * var);
+        }
+        self.problem += lp_sum(&obj_vec);
+    }
+
+    fn define_constaints(&mut self) {
+        // Constraint 1: each position group must contain exactly N items (as specified by the constest template)
+        // need: contest roster positions, position groups for each roster position
+    }
 }
 
 
@@ -203,7 +234,7 @@ mod tests {
         }
         problem += lp_sum(&obj_vec);
         // define constraints
-        // Constraint 1: each position group must contain exactly N items (as specified by the constest template)
+        
         for category in vec![1, 2, 3] {
             let group_players = players.iter().filter(|p| p.categories.contains(&category));
             let mut group_constraint: Vec<LpExpression> = Vec::new();
