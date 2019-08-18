@@ -9,10 +9,10 @@ use lp_modeler::variables::*;
 use lp_modeler::variables::LpExpression::*;
 use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
-use crate::common::{ Player };
+use crate::common::{ BuilderState, Player, RosterSlot };
 use crate::player_pool::{ PlayerPool };
 
-struct LpOptimizer {
+pub struct LpOptimizer {
     player_pool: PlayerPool,
     problem: LpProblem,
     vars: HashMap<u64, LpBinary>
@@ -24,6 +24,47 @@ impl LpOptimizer {
             player_pool,
             problem: LpProblem::new("lp_optimizer", LpObjective::Maximize),
             vars: HashMap::new(),
+        }
+    }
+
+    pub fn initialize(&mut self, builder_state: &BuilderState, mapped_indices: &HashMap<String, u32>) {
+        self.define_variables();
+        self.define_objective_fn();
+        let roster_slots: Vec<RosterSlot> = match &builder_state.roster_slots {
+            Some(ref rs) => rs.clone(),
+            None => panic!("Catastrophic error, no roster slots to fill!")
+        };
+        let salary_cap = &builder_state.salary_cap.unwrap();
+        self.define_constaints(&roster_slots, *salary_cap, mapped_indices);
+    }
+
+    pub fn solve(&self) -> Result<Vec<u64>, String> {
+        let solver = CbcSolver::new();
+        // println!("{:?}", &self.problem);
+        self.problem.write_lp("./debug_log/debug.lp");
+        match solver.run(&self.problem) {
+            Ok((_, var_values)) => {
+                let mut player_ids: Vec<u64> = Vec::new();
+                for (name, value) in var_values {
+                    if value == 1.0 {
+                        let id: u64 = match name[2..].parse::<u64>() {
+                            Ok(id) => id,
+                            Err(_) => {
+                                std::u64::MAX
+                            }
+                        };
+                        if id != std::u64::MAX {
+                            player_ids.push(id);
+                        } else {
+                            return Err("failed to parse result id".to_string());
+                        }
+                    }
+                }
+                return Ok(player_ids);
+            },
+            Err(err) => {
+                return Err(format!("Solver error: {}", err));
+            }
         }
     }
 
@@ -44,9 +85,39 @@ impl LpOptimizer {
         self.problem += lp_sum(&obj_vec);
     }
 
-    fn define_constaints(&mut self) {
+    fn define_constaints(&mut self, roster_slots: &[RosterSlot], salary_cap: u32, mapped_indices: &HashMap<String, u32>) {
         // Constraint 1: each position group must contain exactly N items (as specified by the constest template)
         // need: contest roster positions, position groups for each roster position
+        for slot in roster_slots {
+            let slot_count = slot.count;
+            let group_id = mapped_indices.get(&slot.key).expect("optimizer failed to map group id");
+            let group = self.player_pool.get_group(group_id);
+            let mut group_constraint: Vec<LpExpression> = Vec::new();
+            for player in group {
+                let var = self.vars.get(&player.id).unwrap();
+                group_constraint.push(1.0 * var);
+            }
+            // Into<LpExpression> is only implemented for f32 and i32 integer types. these values are represtative of real world positions on teams so they will be low enough that this conversion should never become an issue
+            self.problem += lp_sum(&group_constraint).equal(slot_count as i32);
+        }
+
+        // // Constraint 2: each player may only be included once.
+        // for (_, var) in &self.vars {
+        //     self.problem += (1.0 * var).le(1);
+        // }
+
+        // Constraint 3: salaries of each player cannot exceed salary cap
+        let mut cons_vec: Vec<LpExpression> = Vec::new();
+        for (id, var) in &self.vars {
+            let salary_coef: f32 = self.player_pool.get_player(id).unwrap().price as f32;
+            cons_vec.push(salary_coef * var);
+        }
+        // Into<LpExpression>
+        self.problem += lp_sum(&cons_vec).le(salary_cap as i32);
+    }
+
+    fn define_showdown_constraints(&mut self) {
+        // TODO
     }
 }
 
@@ -56,6 +127,39 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_lp_optimizer() {
+        let players = get_test_players();
+        let player_pool = PlayerPool::new(players, true);
+        let builder_state = BuilderState {
+            player_pool: Some(player_pool.clone()),
+            player_data_list: None,
+            roster_slots: Some(get_test_roster_slots()),
+            salary_cap: Some(16300),
+        };
+        let mapped_indices = hashmap!{
+            "QB".to_string() => 1,
+            "RB".to_string() => 2,
+            "WR".to_string() => 3,
+        };
+
+        let mut optimizer: LpOptimizer = LpOptimizer::new(player_pool.clone());
+        optimizer.initialize(&builder_state, &mapped_indices);
+        match optimizer.solve() {
+            Ok(ids) => {
+                for id in ids {
+                    let player = player_pool.get_player(&id).unwrap();
+                    println!("{:?}", player);
+                }
+                assert!(true);
+            },
+            Err(err) => {
+                println!("{:?}", err);
+                assert!(false);
+            }
+        }
+    }
+
+    // #[test]
     fn learning() {
         let ref a = LpInteger::new("a");
         let ref b = LpInteger::new("b");
@@ -124,7 +228,7 @@ mod tests {
         }
     }
 
-    #[test]
+    // #[test]
     fn test_matchmaking() {
         // Problem Data
         let men = vec!["A", "B", "C"];
@@ -212,7 +316,7 @@ mod tests {
         }
     }
 
-    #[test]
+    // #[test]
     fn test_dfs_context() {
         // get the test data
         let players = get_test_players();
@@ -350,5 +454,33 @@ mod tests {
             projected_points: 17.3,
         });
         players
+    }
+
+    fn get_test_roster_slots() -> Vec<RosterSlot> {
+        let qb_slot = RosterSlot {
+            name: "Quarterback".to_string(),
+            key: "QB".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        let rb_slot = RosterSlot {
+            name: "Runningback".to_string(),
+            key: "RB".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        let wr_slot = RosterSlot {
+            name: "Wide Receiver".to_string(),
+            key: "WR".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        vec![qb_slot, rb_slot, wr_slot]
     }
 }

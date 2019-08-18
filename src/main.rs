@@ -13,7 +13,7 @@ use std::process;
 use clap::{ App, Arg, ArgMatches };
 use builder::builder::{ Builder, Lineup };
 
-fn run(matches: ArgMatches) -> Result<Vec<Lineup>, &'static str> {
+fn run(matches: ArgMatches) -> Result<Vec<Lineup>, String> {
     let input_file = matches.value_of("INPUT_FILE").unwrap(); // this is a required parameter
     let provider = matches.value_of("provider").unwrap();
     let contest_type = matches.value_of("contest-type").unwrap();
@@ -25,7 +25,7 @@ fn run(matches: ArgMatches) -> Result<Vec<Lineup>, &'static str> {
                         .contest(contest_type)
                         .slate(input_file)
                         .build().expect("optimizer build step failed")
-                        .optimize();
+                        .optimize_new();
     result
 }
 

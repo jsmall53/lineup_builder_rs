@@ -7,6 +7,7 @@ use csv;
 use serde::{ Deserialize, Serialize };
 use crate::common::{ BuilderState, Player };
 use crate::category_mapper;
+use crate::player_pool::PlayerPool;
 
 // TODO: figure out this interface!
 pub trait SlateReader {
@@ -57,7 +58,8 @@ fn read_dk_row(reader: &mut csv::Reader<File>, builder_state: &mut BuilderState,
             Err(_err) => return Err("error parsing csv")
         }
     }
-    builder_state.player_data_list = Some(player_data_list);
+    let player_pool = PlayerPool::new(player_data_list, true);
+    builder_state.player_pool = Some(player_pool);
     Ok(())
 }
 
@@ -102,7 +104,8 @@ fn read_fanduel_row(reader: &mut csv::Reader<File>, builder_state: &mut BuilderS
             },
         }
     }
-    builder_state.player_data_list = Some(player_data_list);
+    let player_pool = PlayerPool::new(player_data_list, true);
+    builder_state.player_pool = Some(player_pool);
     Ok(())
 }
 

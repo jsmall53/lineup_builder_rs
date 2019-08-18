@@ -2,6 +2,7 @@ use std::collections::{ HashMap };
 use std::collections::hash_map::Iter;
 use crate::common::{ Player };
 
+#[derive(Debug, Clone, Default)]
 pub struct PlayerPool {
     player_map: HashMap<u64, Player>,
 }
@@ -24,8 +25,8 @@ impl PlayerPool {
         }
     }
 
-    pub fn get_player(&self, player_id: u64) -> Option<&Player> {
-        self.player_map.get(&player_id)
+    pub fn get_player(&self, player_id: &u64) -> Option<&Player> {
+        self.player_map.get(player_id)
     }
 
     /// Returns a list of all players currently in the pool
@@ -36,9 +37,9 @@ impl PlayerPool {
     }
 
     /// Gets a list of all players the belong to the given group
-    pub fn get_group(&self, group_id: u32) -> Vec<Player> {
+    pub fn get_group(&self, group_id: &u32) -> Vec<Player> {
         let mut list: Vec<Player> = self.player_map.iter()
-            .filter(|(_,p)| p.categories.contains(&group_id))
+            .filter(|(_,p)| p.categories.contains(group_id))
             .map(|(_,p)| p.clone())
             .collect();
         list.sort_by(|a,b| b.partial_cmp(a).unwrap());

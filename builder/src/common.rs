@@ -1,8 +1,9 @@
 use std::cmp::{ Ordering };
 use std::collections::{ HashMap, HashSet };
 use serde::{ Deserialize, Serialize };
+use crate::player_pool::PlayerPool;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RosterSlot {
     pub name: String,
     pub key: String,
@@ -41,6 +42,8 @@ impl PartialEq for Player {
 impl Eq for Player { }
 
 pub struct BuilderState {
+    pub player_pool: Option<PlayerPool>,
+    /// DEPRECATED
     pub player_data_list: Option<Vec<Player>>,
     pub roster_slots: Option<Vec<RosterSlot>>,
     pub salary_cap: Option<u32>,
