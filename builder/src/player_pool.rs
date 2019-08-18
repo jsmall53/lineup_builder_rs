@@ -11,7 +11,7 @@ pub struct PlayerPool {
 impl PlayerPool {
     pub fn new(mut players: Vec<Player>, optimize: bool) -> PlayerPool {
         if optimize {
-            players.retain(|p| p.projected_points > 0.0);
+            players.retain(|p| p.projected_points > 3.0);
         }
         players.sort_by(|a,b| b.partial_cmp(a).unwrap());
 

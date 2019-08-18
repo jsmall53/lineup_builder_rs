@@ -15,7 +15,9 @@ use crate::player_pool::{ PlayerPool };
 pub struct LpOptimizer {
     player_pool: PlayerPool,
     problem: LpProblem,
-    vars: HashMap<u64, LpBinary>
+
+    ///Key is (player_id, group_id) tuple
+    vars: HashMap<(u64, u32), LpBinary>
 }
 
 impl LpOptimizer {
@@ -47,7 +49,7 @@ impl LpOptimizer {
                 let mut player_ids: Vec<u64> = Vec::new();
                 for (name, value) in var_values {
                     if value == 1.0 {
-                        let id: u64 = match name[2..].parse::<u64>() {
+                        let id: u64 = match Self::id_from_variable_name(&name) {
                             Ok(id) => id,
                             Err(_) => {
                                 std::u64::MAX
@@ -69,15 +71,19 @@ impl LpOptimizer {
     }
 
     fn define_variables(&mut self) {
+        // TODO: try using a different variable for each category for every player
+        //      example: Saquon Barkley needs a saquon_rb variable and a saquon_flex variable
         for player in self.player_pool.get_all() {
-            let var_name = format!("P_{}", player.id);
-            self.vars.insert(player.id, LpBinary::new(&var_name));
+            for category in player.categories{
+                let var_name = Self::create_variable_name(player.id, category);
+                self.vars.insert((player.id, category), LpBinary::new(&var_name));
+            }
         }
     }
 
     fn define_objective_fn(&mut self) {
         let mut obj_vec: Vec<LpExpression> = Vec::new();
-        for (&id, var) in &self.vars {
+        for (&(id, _), var) in &self.vars {
             let obj_coef: Vec<f32> = self.player_pool.iter()
                     .filter(|(i,_)| **i == id).map(|(_,p)| p.projected_points as f32).take(1).collect();
             obj_vec.push(obj_coef[0] * var);
@@ -87,37 +93,58 @@ impl LpOptimizer {
 
     fn define_constaints(&mut self, roster_slots: &[RosterSlot], salary_cap: u32, mapped_indices: &HashMap<String, u32>) {
         // Constraint 1: each position group must contain exactly N items (as specified by the constest template)
-        // need: contest roster positions, position groups for each roster position
         for slot in roster_slots {
+            // println!("mapping slot:\n{:?}", slot);
             let slot_count = slot.count;
             let group_id = mapped_indices.get(&slot.key).expect("optimizer failed to map group id");
             let group = self.player_pool.get_group(group_id);
             let mut group_constraint: Vec<LpExpression> = Vec::new();
+            // println!("players for this slot:");
             for player in group {
-                let var = self.vars.get(&player.id).unwrap();
-                group_constraint.push(1.0 * var);
+                // print!("{}, ", player.name);
+                let var = self.vars.get(&(player.id, *group_id)).unwrap();
+                group_constraint.push(1 * var);
             }
+            // println!("\nslot constraint:\n\n{:?}", group_constraint);
             // Into<LpExpression> is only implemented for f32 and i32 integer types. these values are represtative of real world positions on teams so they will be low enough that this conversion should never become an issue
             self.problem += lp_sum(&group_constraint).equal(slot_count as i32);
         }
 
-        // // Constraint 2: each player may only be included once.
-        // for (_, var) in &self.vars {
-        //     self.problem += (1.0 * var).le(1);
-        // }
-
-        // Constraint 3: salaries of each player cannot exceed salary cap
+        // Constraint 2: salaries of each player cannot exceed salary cap
         let mut cons_vec: Vec<LpExpression> = Vec::new();
-        for (id, var) in &self.vars {
+        for ((id, _), var) in &self.vars {
             let salary_coef: f32 = self.player_pool.get_player(id).unwrap().price as f32;
             cons_vec.push(salary_coef * var);
         }
-        // Into<LpExpression>
         self.problem += lp_sum(&cons_vec).le(salary_cap as i32);
+
+        // Constraint 3: a player can only be included once so each category variation must add to 1
+        for (id, player) in self.player_pool.iter() {
+            let mut duplication_constraint: Vec<LpExpression> = Vec::new();
+            if player.categories.len() > 1 {
+                for cat in &player.categories {
+                    let var = self.vars.get(&(*id, *cat)).unwrap();
+                    duplication_constraint.push(1.0 * var);
+                }
+                self.problem += lp_sum(&duplication_constraint).le(1.0);
+            }
+        }
     }
 
     fn define_showdown_constraints(&mut self) {
         // TODO
+    }
+
+    fn create_variable_name(player_id: u64, group_id: u32) -> String {
+        format!("P_{}_{}", group_id, player_id)
+    }
+
+    fn id_from_variable_name(variable_name: &str) -> Result<u64, String> {
+        let split: Vec<&str> = variable_name.split('_').collect();
+        match split[2].parse::<u64>() {
+            Ok(id) => Ok(id),
+            Err(err) => Err(format!("failed to parse variable name to id: {}", variable_name))
+        }
     }
 }
 
@@ -140,6 +167,40 @@ mod tests {
             "QB".to_string() => 1,
             "RB".to_string() => 2,
             "WR".to_string() => 3,
+        };
+
+        let mut optimizer: LpOptimizer = LpOptimizer::new(player_pool.clone());
+        optimizer.initialize(&builder_state, &mapped_indices);
+        match optimizer.solve() {
+            Ok(ids) => {
+                for id in ids {
+                    let player = player_pool.get_player(&id).unwrap();
+                    println!("{:?}", player);
+                }
+                assert!(true);
+            },
+            Err(err) => {
+                println!("{:?}", err);
+                assert!(false);
+            }
+        }
+    }
+
+    // #[test]
+    fn test_lp_optimizer_flex() {
+        let players = get_test_players_multi_category();
+        let player_pool = PlayerPool::new(players, true);
+        let builder_state = BuilderState {
+            player_pool: Some(player_pool.clone()),
+            player_data_list: None,
+            roster_slots: Some(get_test_roster_slots_flex()),
+            salary_cap: Some(12500),
+        };
+        let mapped_indices = hashmap!{
+            "QB".to_string() => 1,
+            "RB".to_string() => 2,
+            "WR".to_string() => 3,
+            "FLEX".to_string() => 4,
         };
 
         let mut optimizer: LpOptimizer = LpOptimizer::new(player_pool.clone());
@@ -456,6 +517,67 @@ mod tests {
         players
     }
 
+    fn get_test_players_multi_category() -> Vec<Player> {
+        let mut players = Vec::new();
+        players.push(Player {
+            id: 0,
+            name: String::from("Tom Brady"),
+            categories: hashset!{1},
+            price: 4500,
+            projected_points: 18.4,
+        });
+        players.push(Player {
+            id: 1,
+            name: String::from("Lamar Jackson"),
+            categories: hashset!{1},
+            price: 5200,
+            projected_points: 24.8,
+        });
+        players.push(Player {
+            id: 2,
+            name: String::from("Todd Gurley"),
+            categories: hashset!{2, 4},
+            price: 7000,
+            projected_points: 21.2,
+        });
+        players.push(Player {
+            id: 3,
+            name: String::from("Alvin Kamara"),
+            categories: hashset!{2, 4},
+            price: 6700,
+            projected_points: 19.8,
+        });
+        players.push(Player {
+            id: 4,
+            name: String::from("Saquon Barkley"),
+            categories: hashset!{2, 4},
+            price: 7300,
+            projected_points: 26.0,
+        });
+        players.push(Player {
+            id: 5,
+            name: String::from("Desean Jackson"),
+            categories: hashset!{3, 4},
+            price: 3700,
+            projected_points: 10.4,
+        });
+        players.push(Player {
+            id: 6,
+            name: String::from("Deandre Hopkins"),
+            categories: hashset!{3, 4},
+            price: 6800,
+            projected_points: 19.9,
+        });
+        players.push(Player {
+            id: 7,
+            name: String::from("Davante Adams"),
+            categories: hashset!{3, 4},
+            price: 6700,
+            projected_points: 17.3,
+        });
+        players
+    }
+
     fn get_test_roster_slots() -> Vec<RosterSlot> {
         let qb_slot = RosterSlot {
             name: "Quarterback".to_string(),
@@ -482,5 +604,41 @@ mod tests {
         };
 
         vec![qb_slot, rb_slot, wr_slot]
+    }
+
+    fn get_test_roster_slots_flex() -> Vec<RosterSlot> {
+        let qb_slot = RosterSlot {
+            name: "Quarterback".to_string(),
+            key: "QB".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        let rb_slot = RosterSlot {
+            name: "Runningback".to_string(),
+            key: "RB".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        let wr_slot = RosterSlot {
+            name: "Wide Receiver".to_string(),
+            key: "WR".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        let flex_slot = RosterSlot {
+            name: "Flex".to_string(),
+            key: "FLEX".to_string(),
+            count: 1,
+            salary_multiplier: 1.0,
+            point_multiplier: 1.0,
+        };
+
+        vec![qb_slot, rb_slot, wr_slot, flex_slot]
     }
 }

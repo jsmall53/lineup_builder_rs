@@ -214,6 +214,7 @@ impl Builder {
                         for id in ids {
                             player_list.push(player_pool.get_player(&id).unwrap().clone());
                         }
+                        player_list.sort_by(|a,b| b.partial_cmp(a).unwrap());
                         lineups.push(Lineup::new(player_list));
                         return Ok(lineups);
                     },
