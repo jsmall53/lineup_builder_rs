@@ -7,8 +7,10 @@ use crate::category_mapper;
 use crate::common;
 use crate::common::{ BuilderState, Player };
 use crate::contest_reader::{ load_contest };
+use crate::player_pool::PlayerPool;
 use crate::slate_reader::{ read_slate };
 use crate::lineup_optimizer::{ OptimizerContext, Optimizer };
+use crate::lp_optimizer::{ LpOptimizer };
 
 pub struct Lineup {
     player_list: Vec<Player>,
@@ -112,6 +114,7 @@ impl Builder {
         }
 
         let mut builder_state = BuilderState {
+            player_pool: None,
             player_data_list: None,
             roster_slots: None,
             salary_cap: None,
@@ -188,6 +191,40 @@ impl Builder {
             },
             None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
         };
+    }
+
+    pub fn optimize_new(&self) -> Result<Vec<Lineup>, String> {
+        let mapped_indices = match &self.sport {
+            Some(sport) => category_mapper::map_categories(sport).unwrap(),
+            None => panic!("failed mapping categories for optimization")
+        };
+
+        match &self.builder_state {
+            Some(ref s) => {
+                let player_pool: &PlayerPool = match &s.player_pool {
+                    Some(ref pp) => pp,
+                    None => panic!("Catastrophic error, no player pool available for optimization")
+                };
+                let mut optimizer: LpOptimizer = LpOptimizer::new(player_pool.clone());
+                optimizer.initialize(s, &mapped_indices);
+                match optimizer.solve() {
+                    Ok(ids) => {
+                        let mut lineups: Vec<Lineup> = Vec::new();
+                        let mut player_list: Vec<Player> = Vec::new();
+                        for id in ids {
+                            player_list.push(player_pool.get_player(&id).unwrap().clone());
+                        }
+                        player_list.sort_by(|a,b| b.partial_cmp(a).unwrap());
+                        lineups.push(Lineup::new(player_list));
+                        return Ok(lineups);
+                    },
+                    Err(err) => {
+                        return Err(format!("Error solving slate: {}", err));
+                    }
+                }
+            },
+            None => panic!("Catastrophic error, no state available to get roster categories, please retry"),
+        }
     }
 }
 

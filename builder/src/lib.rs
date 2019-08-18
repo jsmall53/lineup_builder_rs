@@ -14,6 +14,7 @@ mod contest_reader;
 mod slate_reader;
 mod lineup_optimizer;
 mod lp_optimizer;
+mod player_pool;
 
 #[cfg(test)]
 mod tests {
