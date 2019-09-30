@@ -129,6 +129,27 @@ impl LpOptimizer {
                 self.problem += lp_sum(&duplication_constraint).le(1.0);
             }
         }
+
+        for (id, player) in self.player_pool.iter() {
+            if let Some(same_name) = self.player_pool.get_players_by_name(&player.name) {
+                for possibly_same in same_name {
+                    if possibly_same.id != player.id &&
+                       possibly_same.team == player.team &&
+                       possibly_same.position == player.position { // if the ids are different but the name, team, and position are the same then we need to add a constraint
+                        let mut duplication_constraint: Vec<LpExpression> = Vec::new();
+                        for player_cat in &player.categories {
+                            let player_var = self.vars.get(&(*id, *player_cat)).unwrap();
+                            duplication_constraint.push(1.0 * player_var);
+                            for duplicate_cat in &possibly_same.categories {
+                                let dup_var = self.vars.get(&(possibly_same.id, *duplicate_cat)).unwrap();
+                                duplication_constraint.push(1.0 * dup_var);
+                            }
+                        }
+                        self.problem += lp_sum(&duplication_constraint).le(1.0);
+                    }
+                }
+            }
+        }
     }
 
     fn define_showdown_constraints(&mut self) {

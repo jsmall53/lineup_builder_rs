@@ -45,6 +45,8 @@ fn read_dk_row(reader: &mut csv::Reader<File>, builder_state: &mut BuilderState,
                 let mut player = Player {
                     id: record.id,
                     name: record.name,
+                    team: record.teamabbrev,
+                    position: record.position,
                     price: record.salary,
                     projected_points: record.avg_points_per_game,
                     categories: categories,
@@ -86,15 +88,17 @@ fn read_fanduel_row(reader: &mut csv::Reader<File>, builder_state: &mut BuilderS
                 let mut player = Player {
                     id: id,
                     name: record.nickname,
+                    team: record.team,
+                    position: record.position,
                     price: record.salary,
                     projected_points: record.fantasy_points_per_game,
                     categories: categories,
                 };
 
                 // TODO: fix this, tie the salary multiplier to the roster slot?
-                if &record.position == "CPT" {
-                    player.projected_points *= 1.5;
-                }
+                // if &record.position == "CPT" {
+                //     player.projected_points *= 1.5;
+                // }
                 id += 1;
                 player_data_list.push(player);
             },

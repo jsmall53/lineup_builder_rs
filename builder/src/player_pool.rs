@@ -5,6 +5,7 @@ use crate::common::{ Player };
 #[derive(Debug, Clone, Default)]
 pub struct PlayerPool {
     player_map: HashMap<u64, Player>,
+    name_map: HashMap<String, Vec<u64>>,
 }
 
 // TODO: contains a lot of cloning, figure out a better model to avoid excessive memory use
@@ -16,17 +17,37 @@ impl PlayerPool {
         players.sort_by(|a,b| b.partial_cmp(a).unwrap());
 
         let mut player_map = HashMap::new();
+        let mut name_map: HashMap<String, Vec<u64>> = HashMap::new();
         for player in &players {
             player_map.insert(player.id, player.clone()); // TODO: FIX THIS CLONE, NEED ONE SOURCE OF TRUTH
+            
+            if name_map.contains_key(&player.name) {
+                name_map.get_mut(&player.name).unwrap().push(player.id);
+            } else {
+                let vec = vec![player.id];
+                name_map.insert(player.name.clone(), vec);
+            }
         }
 
         PlayerPool {
             player_map,
+            name_map,
         }
     }
 
     pub fn get_player(&self, player_id: &u64) -> Option<&Player> {
         self.player_map.get(player_id)
+    }
+
+    pub fn get_players_by_name(&self, player_name: &str) -> Option<Vec<&Player>> {
+        if let Some(id_list) = self.name_map.get(player_name) {
+            let mut list: Vec<&Player> = Vec::new();
+            for id in id_list {
+                list.push(self.get_player(id).unwrap());
+            }
+            return Some(list);
+        }
+        return None 
     }
 
     /// Returns a list of all players currently in the pool

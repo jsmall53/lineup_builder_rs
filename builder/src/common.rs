@@ -16,6 +16,8 @@ pub struct RosterSlot {
 pub struct Player {
     pub id: u64,
     pub name: String,
+    pub team: String,
+    pub position: String,
     pub categories: HashSet<u32>,
     pub price: u32,
     pub projected_points: f64
