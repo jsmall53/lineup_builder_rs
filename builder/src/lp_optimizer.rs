@@ -482,6 +482,8 @@ mod tests {
         players.push(Player {
             id: 0,
             name: String::from("Tom Brady"),
+            team: String::from("NE"),
+            position: String::from("QB"),
             categories: hashset!{1},
             price: 4500,
             projected_points: 18.4,
@@ -489,6 +491,8 @@ mod tests {
         players.push(Player {
             id: 1,
             name: String::from("Lamar Jackson"),
+            team: String::from("BAL"),
+            position: String::from("QB"),
             categories: hashset!{1},
             price: 5200,
             projected_points: 24.8,
@@ -496,6 +500,8 @@ mod tests {
         players.push(Player {
             id: 2,
             name: String::from("Todd Gurley"),
+            team: String::from("LAR"),
+            position: String::from("RB"),
             categories: hashset!{2},
             price: 7000,
             projected_points: 21.2,
@@ -503,6 +509,8 @@ mod tests {
         players.push(Player {
             id: 3,
             name: String::from("Alvin Kamara"),
+            team: String::from("NO"),
+            position: String::from("RB"),
             categories: hashset!{2},
             price: 6700,
             projected_points: 19.8,
@@ -510,6 +518,8 @@ mod tests {
         players.push(Player {
             id: 4,
             name: String::from("Saquon Barkley"),
+            team: String::from("NYG"),
+            position: String::from("RB"),
             categories: hashset!{2},
             price: 7300,
             projected_points: 26.0,
@@ -517,6 +527,8 @@ mod tests {
         players.push(Player {
             id: 5,
             name: String::from("Desean Jackson"),
+            team: String::from("PHI"),
+            position: String::from("WR"),
             categories: hashset!{3},
             price: 3700,
             projected_points: 10.4,
@@ -524,6 +536,8 @@ mod tests {
         players.push(Player {
             id: 6,
             name: String::from("Deandre Hopkins"),
+            team: String::from("HST"),
+            position: String::from("WR"),
             categories: hashset!{3},
             price: 6800,
             projected_points: 19.9,
@@ -531,6 +545,8 @@ mod tests {
         players.push(Player {
             id: 7,
             name: String::from("Davante Adams"),
+            team: String::from("GB"),
+            position: String::from("WR"),
             categories: hashset!{3},
             price: 6700,
             projected_points: 17.3,
@@ -543,6 +559,8 @@ mod tests {
         players.push(Player {
             id: 0,
             name: String::from("Tom Brady"),
+            team: String::from("NE"),
+            position: String::from("QB"),
             categories: hashset!{1},
             price: 4500,
             projected_points: 18.4,
@@ -550,6 +568,8 @@ mod tests {
         players.push(Player {
             id: 1,
             name: String::from("Lamar Jackson"),
+            team: String::from("BAL"),
+            position: String::from("QB"),
             categories: hashset!{1},
             price: 5200,
             projected_points: 24.8,
@@ -557,6 +577,8 @@ mod tests {
         players.push(Player {
             id: 2,
             name: String::from("Todd Gurley"),
+            team: String::from("LAR"),
+            position: String::from("RB"),
             categories: hashset!{2, 4},
             price: 7000,
             projected_points: 21.2,
@@ -564,6 +586,8 @@ mod tests {
         players.push(Player {
             id: 3,
             name: String::from("Alvin Kamara"),
+            team: String::from("NO"),
+            position: String::from("RB"),
             categories: hashset!{2, 4},
             price: 6700,
             projected_points: 19.8,
@@ -571,6 +595,8 @@ mod tests {
         players.push(Player {
             id: 4,
             name: String::from("Saquon Barkley"),
+            team: String::from("NYG"),
+            position: String::from("RB"),
             categories: hashset!{2, 4},
             price: 7300,
             projected_points: 26.0,
@@ -578,6 +604,8 @@ mod tests {
         players.push(Player {
             id: 5,
             name: String::from("Desean Jackson"),
+            team: String::from("PHI"),
+            position: String::from("WR"),
             categories: hashset!{3, 4},
             price: 3700,
             projected_points: 10.4,
@@ -585,6 +613,8 @@ mod tests {
         players.push(Player {
             id: 6,
             name: String::from("Deandre Hopkins"),
+            team: String::from("HST"),
+            position: String::from("WR"),
             categories: hashset!{3, 4},
             price: 6800,
             projected_points: 19.9,
@@ -592,6 +622,8 @@ mod tests {
         players.push(Player {
             id: 7,
             name: String::from("Davante Adams"),
+            team: String::from("GB"),
+            position: String::from("WR"),
             categories: hashset!{3, 4},
             price: 6700,
             projected_points: 17.3,

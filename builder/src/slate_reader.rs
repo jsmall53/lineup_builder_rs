@@ -54,6 +54,7 @@ fn read_dk_row(reader: &mut csv::Reader<File>, builder_state: &mut BuilderState,
                 // TODO: fix this, tie the salary multiplier to the roster slot?
                 if &record.roster_position == "CPT" {
                     player.projected_points *= 1.5;
+                    player.price = ((player.price as f64) * 1.5) as u32; // this is bad lmao
                 }
                 player_data_list.push(player);
             },

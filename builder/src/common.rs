@@ -79,6 +79,8 @@ mod tests {
         let player = Player { 
             id: 1,
             name: String::from("test player"),
+            team: String::from("none"),
+            position: String::from("waterboy"),
             price: 5000,
             projected_points: 20.0,
             categories: HashSet::new()
